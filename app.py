@@ -16,7 +16,7 @@ if uploaded_file:
     # Obtener nombre del partido desde el archivo
     raw_name = df['Period Name'].iloc[0] if 'Period Name' in df.columns else "Partido 1"
 
-    # Extraer nombre limpio y resultado (formato esperado: "F2_TA_EQUIPO1 VS EQUIPO2 [resultado opcional]")
+    # Extraer nombre limpio y resultado
     pattern = re.compile(r"F\d+_\w+_(.+?) VS (.+)", re.IGNORECASE)
     match = pattern.search(raw_name)
     equipo_1, equipo_2 = match.groups() if match else ("Equipo 1", "Equipo 2")
@@ -89,17 +89,53 @@ if uploaded_file:
         st.subheader("Comparativa entre jugadores")
         selected_chart_metric = st.selectbox("Selecciona una métrica para comparar", list(selected_metrics.keys()))
 
+        # Comparación total por jugador
         sorted_df = display_df.sort_values(by=selected_chart_metric, ascending=False)
-        fig_bar = px.bar(
+        fig_total = px.bar(
             sorted_df,
             x='Player Name',
             y=selected_chart_metric,
             text=sorted_df[selected_chart_metric].round(2),
-            title=f"{selected_chart_metric} por jugador (ordenado)"
+            title=f"{selected_chart_metric} por jugador (Total)"
         )
-        fig_bar.update_traces(textposition='inside')
-        fig_bar.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        st.plotly_chart(fig_bar)
+        fig_total.update_traces(textposition='inside')
+        fig_total.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        st.plotly_chart(fig_total)
+
+        # Comparación por tiempos (solo para métricas que están en el dataframe por Period)
+        st.subheader(f"{selected_chart_metric} por jugador (1T vs 2T)")
+        col_name = selected_metrics[selected_chart_metric]
+        first = first_half.groupby('Player Name')[col_name].mean().reset_index(name='1T')
+        second = second_half.groupby('Player Name')[col_name].mean().reset_index(name='2T')
+        merged = pd.merge(first, second, on='Player Name')
+        merged['Total'] = merged['1T'] + merged['2T']
+        merged = merged.sort_values(by='Total', ascending=False)
+
+        fig_split = go.Figure()
+        fig_split.add_trace(go.Bar(
+            x=merged['Player Name'],
+            y=merged['1T'],
+            name='1er Tiempo',
+            marker_color='lightskyblue',
+            text=[f"{v:.2f}" for v in merged['1T']],
+            textposition='inside'
+        ))
+        fig_split.add_trace(go.Bar(
+            x=merged['Player Name'],
+            y=merged['2T'],
+            name='2do Tiempo',
+            marker_color='tomato',
+            text=[f"{v:.2f}" for v in merged['2T']],
+            textposition='inside'
+        ))
+        fig_split.update_layout(
+            barmode='stack',
+            xaxis_title='Jugador',
+            yaxis_title=selected_chart_metric,
+            uniformtext_minsize=8,
+            uniformtext_mode='hide'
+        )
+        st.plotly_chart(fig_split)
 
 else:
     st.info("Por favor, sube un archivo CSV para comenzar.")
