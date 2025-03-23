@@ -121,19 +121,19 @@ if uploaded_files:
         labels["hsr"]: 'HSR Eff Distance (Gen2)',
         labels["sprint"]: 'Sprint Eff Distance (Gen2)',
         labels["sprint_count"]: 'Sprint Eff Count (Gen2)',
-        labels["max_speed"]: 'Max Velocity [ Per Max ]',
+        labels["max_speed"]: 'Max Velocity',
         labels["acc"]: 'Acc Eff Count (Gen2)',
         labels["dec"]: 'Dec Eff Count (Gen2)',
-        labels["load"]: 'Player Load (Gen2)',
-        labels["impacts"]: 'Impacts Count',
-        labels["work_rate"]: 'Work Rate [ Per Min ]',
-        labels["power_score"]: 'Power Score',
-        labels["work_ratio"]: 'Work Ratio',
-        labels["max_acc"]: 'Max Acceleration',
-        labels["max_dec"]: 'Max Deceleration',
-        labels["power_plays"]: 'Power Plays',
-        labels["session_score"]: 'Session Load %',
-        labels["rhie"]: 'RHIE Count'
+        labels["load"]: 'Player Load',
+        "Peak Player Load": 'Peak Player Load',
+        "Player Load Work Time": 'Player Load Work Time',
+        "Player Load Rest Time": 'Player Load Rest Time',
+        "Player Load Work:Rest": 'Player Load Work:Rest',
+        "Velocity Exertion": 'Velocity Exertion',
+        "Velocity Exertion Per Min": 'Velocity Exertion Per Min',
+        "Acceleration Load": 'Acceleration Load',
+        "Acceleration Density Index": 'Acceleration Density Index',
+        labels["rhie"]: 'RHIE Total Bouts'
     }
 
     partidos = sorted(set([p for p in full_df['Partido + Fecha'].unique() if not re.search(r'(1ER|2DO)', p, re.IGNORECASE)]))
