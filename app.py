@@ -71,16 +71,21 @@ if uploaded_file:
     st.divider()
 
     if selected_player != 'Todos':
+        st.subheader(f"Métricas de {selected_player}")
         player_data = full_df[full_df['Player Name'] == selected_player]
-        player_display = player_data[['Player Name'] + list(selected_metrics.values())].copy()
-        player_display = player_display.rename(columns={v: k for k, v in selected_metrics.items()})
-        st.dataframe(player_display)
+        player_summary = player_data[list(selected_metrics.values())].mean().round(2).reset_index()
+        player_summary.columns = ['Métrica', 'Valor']
+        player_summary['Métrica'] = player_summary['Métrica'].replace({v: k for k, v in selected_metrics.items()})
 
-        radar_data = player_display.set_index('Player Name').T.reset_index()
-        radar_data.columns = ['Métrica', 'Valor']
-
-        fig = px.line_polar(radar_data, r='Valor', theta='Métrica', line_close=True,
-                            title=f"Perfil Físico - {selected_player}")
+        fig = px.bar(
+            player_summary,
+            x='Métrica',
+            y='Valor',
+            text='Valor',
+            title=f"Resumen de métricas - {selected_player}"
+        )
+        fig.update_traces(textposition='inside')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig)
 
     if selected_player == 'Todos':
@@ -102,7 +107,7 @@ if uploaded_file:
         fig_total.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig_total)
 
-        # Comparación por tiempos (solo para métricas que están en el dataframe por Period)
+        # Comparación por tiempos
         st.subheader(f"{selected_chart_metric} por jugador (1T vs 2T)")
         col_name = selected_metrics[selected_chart_metric]
         first = first_half.groupby('Player Name')[col_name].mean().reset_index(name='1T')
