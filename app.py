@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import re
 
 # Cargar archivo CSV
 st.sidebar.header("Carga de datos")
@@ -13,13 +14,18 @@ if uploaded_file:
     df.columns = df.columns.str.strip()  # quitar espacios
 
     # Obtener nombre del partido desde el archivo
-    partido_nombre = df['Period Name'].iloc[0] if 'Period Name' in df.columns else "Partido 1"
+    raw_name = df['Period Name'].iloc[0] if 'Period Name' in df.columns else "Partido 1"
 
-    # Título principal con nombre del partido
-    st.title(f"Dashboard GPS - Cavalry FC | {partido_nombre}")
+    # Extraer nombre limpio y resultado (formato esperado: "F2_TA_EQUIPO1 VS EQUIPO2 [resultado opcional]")
+    pattern = re.compile(r"F\d+_\w+_(.+?) VS (.+)", re.IGNORECASE)
+    match = pattern.search(raw_name)
+    equipo_1, equipo_2 = match.groups() if match else ("Equipo 1", "Equipo 2")
+
+    # Título principal con nombre del partido limpio
+    st.title(f"Dashboard GPS - {equipo_1.strip()} vs {equipo_2.strip()}")
 
     st.sidebar.success("Archivo cargado exitosamente")
-    st.sidebar.write(partido_nombre)
+    st.sidebar.write(f"{equipo_1.strip()} vs {equipo_2.strip()}")
 
     # Lista de jugadores
     player_list = ['Todos'] + sorted(df['Player Name'].unique())
@@ -122,3 +128,4 @@ if uploaded_file:
 
 else:
     st.info("Por favor, sube un archivo CSV para comenzar.")
+
