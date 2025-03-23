@@ -46,7 +46,11 @@ if uploaded_files:
 
         df['Fecha CSV'] = fecha
         df['Archivo'] = file.name
-        df['Partido + Fecha'] = df['Period Name'].str.extract(r'(.*?)(?:\s*-\s*\d+)?$')[0] + ' | ' + fecha
+
+        # Asegurar nombre limpio del partido (sin tiempos u otros)
+        partido_base = re.sub(r'\s*-\s*(1ER|2DO)?\s*TIEMPO', '', df['Period Name'].iloc[0], flags=re.IGNORECASE)
+        df['Partido + Fecha'] = f"{partido_base.strip()} | {fecha}"
+
         all_dfs.append(df)
 
     full_df = pd.concat(all_dfs, ignore_index=True)
@@ -63,7 +67,7 @@ if uploaded_files:
         'Deceleraciones (#)': 'Dec Eff Count (Gen2)'
     }
 
-    partidos_unicos = full_df['Partido + Fecha'].dropna().unique().tolist()
+    partidos_unicos = sorted(full_df['Partido + Fecha'].dropna().unique().tolist())
     partidos = ['Todos'] + partidos_unicos if len(partidos_unicos) > 1 else partidos_unicos
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
@@ -131,3 +135,4 @@ if uploaded_files:
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
+
