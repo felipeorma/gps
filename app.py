@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Título principal
-st.title("\ud83c\udfc0 Dashboard GPS - Cavalry FC")
+# Título principal sin emojis para evitar UnicodeEncodeError
+st.title("Dashboard GPS - Cavalry FC")
 
 # Cargar archivo CSV
 st.sidebar.header("Carga de datos")
