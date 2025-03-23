@@ -68,21 +68,26 @@ if uploaded_files:
     partidos = ['Todos'] + sorted(full_df['Period Name'].dropna().unique().tolist())
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
+    # Lista de tiempos únicos
+    tiempos = ['Todos'] + sorted(full_df['Period Number'].dropna().unique().tolist())
+    tiempo_seleccionado = st.sidebar.selectbox("Tiempo", tiempos)
+
     # Lista de jugadores únicos
     jugadores = ['Todos'] + sorted(full_df['Player Name'].dropna().unique().tolist())
-    jugador_seleccionado = st.sidebar.selectbox("Player Name", jugadores)
+    jugador_seleccionado = st.sidebar.selectbox("Jugador", jugadores)
 
-    # Filtrar por partido
+    # Filtrar según selección
     df = full_df.copy()
     if partido_seleccionado != 'Todos':
         df = df[df['Period Name'] == partido_seleccionado]
-
+    if tiempo_seleccionado != 'Todos':
+        df = df[df['Period Number'] == tiempo_seleccionado]
     if jugador_seleccionado != 'Todos':
         df = df[df['Player Name'] == jugador_seleccionado]
 
     st.title("Match GPS Report")
 
-    # Mostrar métricas generales (similares a parte inferior del ejemplo visual)
+    # Mostrar métricas generales
     avg_data = df.groupby('Player Name').agg({
         'Work Rate Total Dist': 'mean',
         'Acceleration Load': 'mean',
@@ -118,4 +123,3 @@ if uploaded_files:
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
-
