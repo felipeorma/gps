@@ -48,6 +48,21 @@ if uploaded_file:
     # Crear tabla resumen con métricas seleccionadas
     display_df = df[['Player Name'] + list(selected_metrics.values())].copy()
     display_df = display_df.rename(columns={v: k for k, v in selected_metrics.items()})
+
+    # Mostrar KPIs en tarjetas
+    st.subheader("Promedios del equipo")
+    kpi_cols = st.columns(3)
+    with kpi_cols[0]:
+        st.metric("Distancia Total Promedio (m)", round(display_df['Distancia Total (m)'].mean(), 1))
+        st.metric("Carga Aceleración Promedio", round(display_df['Carga de Aceleración'].mean(), 1))
+    with kpi_cols[1]:
+        st.metric("Velocidad Máxima Promedio (m/s)", round(display_df['Velocidad Máxima (m/s)'].mean(), 2))
+        st.metric("Aceleraciones Altas Promedio", round(display_df['Aceleraciones Altas'].mean(), 1))
+    with kpi_cols[2]:
+        st.metric("Deceleraciones Altas Promedio", round(display_df['Deceleraciones Altas'].mean(), 1))
+        st.metric("Aceleraciones Bajas Promedio", round(display_df['Aceleraciones Bajas'].mean(), 1))
+
+    st.divider()
     st.dataframe(display_df)
 
     # Gráfico radar por jugador (solo si no está seleccionado 'Todos')
@@ -61,3 +76,4 @@ if uploaded_file:
 
 else:
     st.info("Por favor, sube un archivo CSV para comenzar.")
+
