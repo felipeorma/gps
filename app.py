@@ -30,7 +30,14 @@ labels = {
         "dec": "Decelerations (#)",
         "load": "Player Load",
         "impacts": "Impacts Count",
-        "work_rate": "Work Rate (m/min)"
+        "work_rate": "Work Rate (m/min)",
+        "power_score": "Power Score",
+        "work_ratio": "Work Ratio (%)",
+        "max_acc": "Max Acceleration (m/s²)",
+        "max_dec": "Max Deceleration (m/s²)",
+        "power_plays": "Power Plays",
+        "session_score": "Session Score (%)",
+        "rhie": "RHIE Count"
     },
     "Español": {
         "title": "Informe GPS del Partido",
@@ -52,7 +59,14 @@ labels = {
         "dec": "Deceleraciones (#)",
         "load": "Carga del Jugador",
         "impacts": "Recuento de Impactos",
-        "work_rate": "Índice de Trabajo (m/min)"
+        "work_rate": "Índice de Trabajo (m/min)",
+        "power_score": "Puntuación de Potencia",
+        "work_ratio": "Ratio de Trabajo (%)",
+        "max_acc": "Aceleración Máxima (m/s²)",
+        "max_dec": "Deceleración Máxima (m/s²)",
+        "power_plays": "Jugadas de Potencia",
+        "session_score": "Puntuación de la Sesión (%)",
+        "rhie": "Esfuerzos Repetidos Alta Intensidad"
     }
 }[lang]
 
@@ -112,7 +126,14 @@ if uploaded_files:
         labels["dec"]: 'Dec Eff Count (Gen2)',
         labels["load"]: 'Player Load (Gen2)',
         labels["impacts"]: 'Impacts Count',
-        labels["work_rate"]: 'Work Rate [ Per Min ]'
+        labels["work_rate"]: 'Work Rate [ Per Min ]',
+        labels["power_score"]: 'Power Score',
+        labels["work_ratio"]: 'Work Ratio',
+        labels["max_acc"]: 'Max Acceleration',
+        labels["max_dec"]: 'Max Deceleration',
+        labels["power_plays"]: 'Power Plays',
+        labels["session_score"]: 'Session Load %',
+        labels["rhie"]: 'RHIE Count'
     }
 
     partidos = sorted(set([p for p in full_df['Partido + Fecha'].unique() if not re.search(r'(1ER|2DO)', p, re.IGNORECASE)]))
@@ -172,3 +193,4 @@ if uploaded_files:
 
 else:
     st.info("Cargue uno o más archivos CSV para comenzar / Upload one or more CSV files to begin.")
+
