@@ -161,7 +161,7 @@ if uploaded_files:
     if jugador != labels["all"]:
         df = df[df['Player Name'] == jugador]
 
-        if jugador != labels["all"] and partido != labels["all"]:
+            if jugador != labels["all"] and partido != labels["all"]:
         st.title(f"{labels['title']} - {jugador} | {partido}")
     elif jugador != labels["all"]:
         st.title(f"{labels['title']} - {jugador}")
