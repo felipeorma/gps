@@ -48,7 +48,7 @@ if uploaded_files:
         df['Archivo'] = file.name
 
         # Asegurar nombre limpio del partido (sin tiempos u otros)
-        partido_base = re.sub(r'\s*-\s*(1ER|2DO)?\s*TIEMPO', '', df['Period Name'].iloc[0], flags=re.IGNORECASE)
+        partido_base = re.sub(r'\s*[-_]*\s*(1ER|2DO)?\s*TIEMPO', '', df['Period Name'].iloc[0], flags=re.IGNORECASE)
         df['Partido + Fecha'] = f"{partido_base.strip()} | {fecha}"
 
         all_dfs.append(df)
@@ -67,7 +67,7 @@ if uploaded_files:
         'Deceleraciones (#)': 'Dec Eff Count (Gen2)'
     }
 
-    partidos_unicos = sorted(full_df['Partido + Fecha'].dropna().unique().tolist())
+    partidos_unicos = sorted(set([p for p in full_df['Partido + Fecha'].unique() if not re.search(r'(1ER|2DO)\s*TIEMPO', p, re.IGNORECASE)]))
     partidos = ['Todos'] + partidos_unicos if len(partidos_unicos) > 1 else partidos_unicos
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
@@ -100,6 +100,24 @@ if uploaded_files:
         team_total = grouped.drop(columns=['Player Name']).sum(numeric_only=True)
         team_total['Player Name'] = 'Total Equipo'
         grouped = pd.concat([grouped, pd.DataFrame([team_total])], ignore_index=True)
+
+        # Calcular promedios para visual boxes
+        td_avg = grouped['Distancia Total (m)'][:-1].mean()
+        tempo_avg = grouped['Distancia Tempo (m)'][:-1].mean()
+        hsr_avg = grouped['Distancia HSR (m)'][:-1].mean()
+        sprint_avg = grouped['Distancia Sprint (m)'][:-1].mean()
+        acc_avg = grouped['Aceleraciones (#)'][:-1].mean()
+        dec_avg = grouped['Deceleraciones (#)'][:-1].mean()
+
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        col1.markdown(f"<div class='metric-box'><div class='metric-title'>TD Average</div><div class='metric-value'>{td_avg:.0f}</div></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='metric-box'><div class='metric-title'>Tempo Average</div><div class='metric-value'>{tempo_avg:.0f}</div></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='metric-box'><div class='metric-title'>HSR Average</div><div class='metric-value'>{hsr_avg:.0f}</div></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='metric-box'><div class='metric-title'>Sprint Average</div><div class='metric-value'>{sprint_avg:.0f}</div></div>", unsafe_allow_html=True)
+        col5.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Average</div><div class='metric-value'>{acc_avg:.0f}</div></div>", unsafe_allow_html=True)
+        col6.markdown(f"<div class='metric-box'><div class='metric-title'>DEC Average</div><div class='metric-value'>{dec_avg:.0f}</div></div>", unsafe_allow_html=True)
+
+        st.divider()
 
         st.subheader("Visualización de Jugadores")
         fig = go.Figure()
@@ -135,4 +153,3 @@ if uploaded_files:
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
-
