@@ -162,18 +162,17 @@ if uploaded_files:
         st.subheader(labels["averages"])
 
         metric_labels = list(metrics.items())
-        for i, (k, v) in enumerate(metric_labels):
-            if v in df_grouped.columns:
-                avg = df_grouped[v].mean()
-                if i % 4 == 0:
-                    metric_cols = st.columns(4)
-                col = metric_cols[i % 4]
-                col.markdown(f"""
-                    <div class='metric-box'>
-                        <div class='metric-title'>{k}</div>
-                        <div class='metric-value'>{avg:.0f}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+        for i in range(0, len(metric_labels), 4):
+            metric_cols = st.columns(4)
+            for j, (k, v) in enumerate(metric_labels[i:i+4]):
+                if v in df_grouped.columns:
+                    avg = df_grouped[v].mean()
+                    metric_cols[j].markdown(f"""
+                        <div class='metric-box'>
+                            <div class='metric-title'>{k}</div>
+                            <div class='metric-value'>{avg:.0f}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
 
         st.divider()
 
