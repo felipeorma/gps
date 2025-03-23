@@ -100,6 +100,8 @@ if uploaded_files:
     all_dfs = []
     for file in uploaded_files:
         df = pd.read_csv(file, delimiter=';')
+        df.columns = df.columns.str.strip()  # eliminar espacios
+        df = df.rename(columns=lambda x: x.strip())
         df.columns = df.columns.str.strip()
         name_parts = file.name.split('_')
         try:
