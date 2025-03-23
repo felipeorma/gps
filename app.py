@@ -64,10 +64,13 @@ if uploaded_files:
         'Deceleraciones Bajas (#)': 'Dec1 Eff (Gen2)'
     }
 
-    partidos = ['Todos'] + sorted(full_df['Period Name'].dropna().unique().tolist())
+    partidos_unicos = full_df['Period Name'].dropna().unique().tolist()
+    partidos = ['Todos'] + partidos_unicos if len(partidos_unicos) > 1 else partidos_unicos
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
-    tiempos = ['Todos'] + sorted(full_df['Period Number'].dropna().unique().tolist())
+
+    tiempos = ['Todos', 1, 2]
     tiempo_seleccionado = st.sidebar.selectbox("Tiempo", tiempos)
+
     jugadores = ['Todos'] + sorted(full_df['Player Name'].dropna().unique().tolist())
     jugador_seleccionado = st.sidebar.selectbox("Jugador", jugadores)
 
