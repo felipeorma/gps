@@ -3,9 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Título principal sin emojis para evitar UnicodeEncodeError
-st.title("Dashboard GPS - Cavalry FC")
-
 # Cargar archivo CSV
 st.sidebar.header("Carga de datos")
 uploaded_file = st.sidebar.file_uploader("Sube el archivo del partido (.csv)", type=["csv"])
@@ -15,13 +12,14 @@ if uploaded_file:
     df = pd.read_csv(uploaded_file, delimiter=';')
     df.columns = df.columns.str.strip()  # quitar espacios
 
-    # Mostrar info general
+    # Obtener nombre del partido desde el archivo
     partido_nombre = df['Period Name'].iloc[0] if 'Period Name' in df.columns else "Partido 1"
+
+    # Título principal con nombre del partido
+    st.title(f"Dashboard GPS - Cavalry FC | {partido_nombre}")
+
     st.sidebar.success("Archivo cargado exitosamente")
     st.sidebar.write(partido_nombre)
-
-    # Resultado del partido (entrada manual)
-    match_result = st.sidebar.text_input("Resultado del partido", value=f"{partido_nombre} - resultado")
 
     # Lista de jugadores
     player_list = ['Todos'] + sorted(df['Player Name'].unique())
@@ -44,9 +42,6 @@ if uploaded_file:
     full_df = df.copy()
     display_df = full_df[['Player Name'] + list(selected_metrics.values())].copy()
     display_df = display_df.rename(columns={v: k for k, v in selected_metrics.items()})
-
-    # Mostrar resultado del partido
-    st.subheader(f"Resultado del Partido: {match_result}")
 
     # Mostrar KPIs por periodos
     st.subheader("Promedios de Jugador(es)")
