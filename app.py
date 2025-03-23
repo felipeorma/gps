@@ -53,19 +53,22 @@ labels = {
 st.markdown("""
     <style>
         .metric-box {
-            background-color: #003C3C;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #1a1a1a, #333333);
+            color: #ff0040;
+            padding: 12px;
+            border-radius: 10px;
             text-align: center;
-            margin: 5px;
+            margin: 6px;
+            box-shadow: 0 0 8px #ff0040;
         }
         .metric-title {
             font-size: 16px;
+            color: white;
         }
         .metric-value {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
+            color: white;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -128,11 +131,13 @@ if uploaded_files:
 
         st.subheader(labels["averages"])
 
-        cols = st.columns(len(columns_exist))
-        for i, (k, v) in enumerate(metrics.items()):
+        metric_labels = list(metrics.items())
+        metric_cols = st.columns(4)
+        for i, (k, v) in enumerate(metric_labels):
             if v in df_grouped.columns:
                 avg = df_grouped[v].mean()
-                cols[i].markdown(f"""
+                col = metric_cols[i % 4]  # 4 columnas por fila
+                col.markdown(f"""
                     <div class='metric-box'>
                         <div class='metric-title'>{k}</div>
                         <div class='metric-value'>{avg:.0f}</div>
@@ -141,7 +146,6 @@ if uploaded_files:
 
         st.divider()
 
-        # Mostrar gráficos individuales
         for k, v in metrics.items():
             if v in df.columns:
                 st.subheader(k)
@@ -152,7 +156,7 @@ if uploaded_files:
                     orientation='h',
                     text=chart_df[v].round(1),
                     textposition='outside',
-                    marker_color='teal'
+                    marker_color='crimson'
                 ))
                 fig.update_layout(height=400, xaxis_title=k, yaxis_title=labels["player"])
                 st.plotly_chart(fig, use_container_width=True)
