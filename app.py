@@ -92,6 +92,11 @@ if uploaded_files:
         if 'Distancia Total (m)' in grouped.columns:
             grouped = grouped.sort_values(by='Distancia Total (m)', ascending=False)
 
+        # Agregar fila con totales del equipo
+        team_total = grouped.drop(columns=['Player Name']).sum(numeric_only=True)
+        team_total['Player Name'] = 'Total Equipo'
+        grouped = pd.concat([grouped, pd.DataFrame([team_total])], ignore_index=True)
+
         st.subheader("Visualización de Jugadores")
         fig = go.Figure()
 
@@ -146,6 +151,9 @@ if uploaded_files:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("Tabla con Métricas por Jugador")
+        st.dataframe(grouped, use_container_width=True)
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
