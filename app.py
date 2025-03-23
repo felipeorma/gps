@@ -157,7 +157,8 @@ if uploaded_files:
 
     if not df.empty:
         columns_exist = [v for v in metrics.values() if v in df.columns]
-        df_grouped = df.groupby('Player Name')[columns_exist].mean().reset_index()
+        numeric_df = df[columns_exist].apply(pd.to_numeric, errors='coerce')
+        df_grouped = df.groupby('Player Name')[numeric_df.columns].mean().reset_index()
 
         st.subheader(labels["averages"])
 
