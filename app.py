@@ -66,8 +66,8 @@ if uploaded_files:
         'Deceleraciones Bajas (#)': 'Dec1 Eff (Gen2)'
     }
 
-    first_half = df[df['Period Number'] == 1]
-    second_half = df[df['Period Number'] == 2]
+    first_half = df[df['Period Number'] == 1] if 'Period Number' in df.columns else pd.DataFrame()
+    second_half = df[df['Period Number'] == 2] if 'Period Number' in df.columns else pd.DataFrame()
 
     st.subheader("Promedios de Jugador(es)")
 
@@ -100,9 +100,10 @@ if uploaded_files:
         resumen.columns = ['Fecha', 'Promedio', 'Total']
         st.dataframe(resumen)
 
-        # Por tiempos en una sola barra
-        first = player_df[player_df['Period Number'] == 1][col_name].sum()
-        second = player_df[player_df['Period Number'] == 2][col_name].sum()
+        # Por tiempos en una sola barra (con validación)
+        periodos = player_df['Period Number'].dropna().unique()
+        first = player_df[player_df['Period Number'] == 1][col_name].sum() if 1 in periodos else 0
+        second = player_df[player_df['Period Number'] == 2][col_name].sum() if 2 in periodos else 0
         total = first + second
 
         fig_player = go.Figure()
@@ -134,3 +135,4 @@ if uploaded_files:
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
+
