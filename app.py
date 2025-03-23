@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import re
+import base64
+import io
+from fpdf import FPDF
 
 st.set_page_config(layout="wide")
 
@@ -63,13 +66,14 @@ labels = {
         "power_score": "Puntuación de Potencia",
         "work_ratio": "Ratio de Trabajo (%)",
         "max_acc": "Aceleración Máxima (m/s²)",
-        "max_dec": "Deceleración Máxima (m/s²)",
+        "max_dec": "Desaceleración Máxima (m/s²)",
         "power_plays": "Jugadas de Potencia",
         "session_score": "Puntuación de la Sesión (%)",
         "rhie": "Esfuerzos Repetidos Alta Intensidad"
     }
 }[lang]
 
+# Estilos
 st.markdown("""
     <style>
         .metric-box {
@@ -90,7 +94,7 @@ st.markdown("""
             font-weight: bold;
             color: white;
         }
-            body {
+        body {
             background-color: #111;
         }
         .stApp {
@@ -99,6 +103,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Sidebar
 st.sidebar.header("Filtros")
 uploaded_files = st.sidebar.file_uploader(labels["upload"], type=["csv"], accept_multiple_files=True)
 
@@ -106,8 +111,6 @@ if uploaded_files:
     all_dfs = []
     for file in uploaded_files:
         df = pd.read_csv(file, delimiter=';')
-        df.columns = df.columns.str.strip()  # eliminar espacios
-        df = df.rename(columns=lambda x: x.strip())
         df.columns = df.columns.str.strip()
         name_parts = file.name.split('_')
         try:
@@ -161,63 +164,9 @@ if uploaded_files:
     if jugador != labels["all"]:
         df = df[df['Player Name'] == jugador]
 
-    if jugador != labels["all"] and partido != labels["all"]:
-        st.title(f"{labels['title']} - {jugador} | {partido}")
-    elif jugador != labels["all"]:
-        st.title(f"{labels['title']} - {jugador}")
-    elif partido != labels["all"]:
-        st.title(f"{labels['title']} | {partido}")
-    else:
-        st.title(labels["title"])
-
+    st.title(f"{labels['title']} - {jugador if jugador != labels['all'] else ''} {('| ' + partido) if partido != labels['all'] else ''}")
 
     if not df.empty:
-        with st.sidebar:
-            import base64
-            import io
-            from fpdf import FPDF
-
-            def generate_pdf(title, summary, avg_data):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", size=12)
-                pdf.cell(200, 10, txt=title, ln=True, align='C')
-                pdf.ln(10)
-                for k, v in summary.items():
-                    pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
-                pdf.ln(5)
-                for cat, items in avg_data.items():
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(200, 10, txt=cat, ln=True)
-                    pdf.set_font("Arial", size=11)
-                    for label, val in items:
-                        pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
-                    pdf.ln(3)
-                return pdf.output(dest='S').encode('latin-1')
-
-            if st.button("📄 Crear Informe PDF"):
-                resumen = {
-                    "Partido": partido,
-                    "Fecha": df['Fecha CSV'].iloc[0] if 'Fecha CSV' in df else 'N/A',
-                    "Jugador": jugador
-                }
-                resumen_avg = {}
-                for group, keys in grouped_metrics.items():
-                    items = []
-                    for k in keys:
-                        col_key = metrics.get(k)
-                        if col_key in df_grouped.columns:
-                            val = df_grouped[col_key].mean()
-                            if not pd.isna(val) and val != 0:
-                                items.append((k, val))
-                    if items:
-                        resumen_avg[group] = items
-
-                pdf_bytes = generate_pdf("Reporte GPS - Cavalry FC", resumen, resumen_avg)
-                b64 = base64.b64encode(pdf_bytes).decode()
-                href = f'<a href="data:application/octet-stream;base64,{b64}" download="informe_gps.pdf">📥 Descargar Informe PDF</a>'
-                st.markdown(href, unsafe_allow_html=True)
-
         columns_exist = [v for v in metrics.values() if v in df.columns]
         df[columns_exist] = df[columns_exist].apply(pd.to_numeric, errors='coerce')
         df_grouped = df.groupby('Player Name')[columns_exist].mean().reset_index()
@@ -242,13 +191,53 @@ if uploaded_files:
             ]
         }
 
+        if st.button("📄 Crear Informe PDF"):
+            resumen = {
+                "Partido": partido,
+                "Fecha": df['Fecha CSV'].iloc[0] if 'Fecha CSV' in df else 'N/A',
+                "Jugador": jugador
+            }
+            resumen_avg = {}
+            for group, keys in grouped_metrics.items():
+                items = []
+                for k in keys:
+                    col_key = metrics.get(k)
+                    if col_key in df_grouped.columns:
+                        val = df_grouped[col_key].mean()
+                        if not pd.isna(val) and val != 0:
+                            items.append((k, val))
+                if items:
+                    resumen_avg[group] = items
+
+            def generate_pdf(title, summary, avg_data):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                pdf.cell(200, 10, txt=title, ln=True, align='C')
+                pdf.ln(10)
+                for k, v in summary.items():
+                    pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
+                pdf.ln(5)
+                for cat, items in avg_data.items():
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(200, 10, txt=cat, ln=True)
+                    pdf.set_font("Arial", size=11)
+                    for label, val in items:
+                        pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
+                    pdf.ln(3)
+                return pdf.output(dest='S').encode('latin-1')
+
+            pdf_bytes = generate_pdf("Reporte GPS - Cavalry FC", resumen, resumen_avg)
+            b64 = base64.b64encode(pdf_bytes).decode()
+            href = f'<a href="data:application/octet-stream;base64,{b64}" download="informe_gps.pdf">📥 Descargar Informe PDF</a>'
+            st.markdown(href, unsafe_allow_html=True)
+
         for group, keys in grouped_metrics.items():
             st.markdown(f"### {group}")
             metric_items = [(k, metrics[k]) for k in keys if k in metrics and metrics[k] in df_grouped.columns]
             for i in range(0, len(metric_items), 4):
                 metric_cols = st.columns(4)
-            for j, (k, v) in enumerate(metric_items[i:i+4]):
-                if v in df_grouped.columns:
+                for j, (k, v) in enumerate(metric_items[i:i+4]):
                     avg = df_grouped[v].mean()
                     if not pd.isna(avg) and avg != 0:
                         metric_cols[j].markdown(f"""
@@ -274,6 +263,5 @@ if uploaded_files:
                 ))
                 fig.update_layout(height=400, xaxis_title=k, yaxis_title=labels["player"])
                 st.plotly_chart(fig, use_container_width=True)
-
 else:
     st.info("Cargue uno o más archivos CSV para comenzar / Upload one or more CSV files to begin.")
