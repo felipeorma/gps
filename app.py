@@ -1,10 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.express as px
 import re
 import base64
 import io
+import os
 from fpdf import FPDF
+
+import plotly.io as pio
+pio.kaleido.scope.default_format = "png"
+pio.kaleido.scope.default_width = 700
+pio.kaleido.scope.default_height = 500
 
 st.set_page_config(layout="wide")
 
@@ -135,8 +142,29 @@ def neon_bar_chart(df, label, column):
     )
     return fig
 
-# Función PDF con etiquetas dinámicas traducidas
-def generate_pdf(title, summary, avg_data):
+# Radar chart para incluir en PDF
+def create_radar_chart(data_dict, title):
+    categories = list(data_dict.keys())
+    values = list(data_dict.values())
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=values + [values[0]],
+        theta=categories + [categories[0]],
+        fill='toself',
+        name=title,
+        line=dict(color='rgba(255,0,51,0.8)')
+    ))
+    fig.update_layout(
+        polar=dict(bgcolor="#111", radialaxis=dict(visible=True, color="white")),
+        showlegend=False,
+        paper_bgcolor="#0d0d0d",
+        font=dict(color="white")
+    )
+    return fig
+
+# Función PDF con radar
+
+def generate_pdf(title, summary, avg_data, radar_data=None):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -153,7 +181,17 @@ def generate_pdf(title, summary, avg_data):
         for label, val in items:
             pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
         pdf.ln(3)
+    if radar_data:
+        fig = create_radar_chart(radar_data, "Radar")
+        radar_path = "radar_temp.png"
+        fig.write_image(radar_path)
+        pdf.add_page()
+        pdf.image(radar_path, x=30, w=150)
+        os.remove(radar_path)
     return pdf.output(dest='S').encode('latin-1')
+
+
+
 
 # Sidebar y lógica
 st.sidebar.header("Filtros")
