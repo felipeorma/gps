@@ -46,6 +46,7 @@ if uploaded_files:
 
         df['Fecha CSV'] = fecha
         df['Archivo'] = file.name
+        df['Partido + Fecha'] = df['Period Name'].astype(str) + ' | ' + fecha
         all_dfs.append(df)
 
     full_df = pd.concat(all_dfs, ignore_index=True)
@@ -62,7 +63,7 @@ if uploaded_files:
         'Deceleraciones (#)': 'Dec Eff Count (Gen2)'
     }
 
-    partidos_unicos = full_df['Period Name'].dropna().unique().tolist()
+    partidos_unicos = full_df['Partido + Fecha'].dropna().unique().tolist()
     partidos = ['Todos'] + partidos_unicos if len(partidos_unicos) > 1 else partidos_unicos
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
@@ -74,7 +75,7 @@ if uploaded_files:
 
     df = full_df.copy()
     if partido_seleccionado != 'Todos':
-        df = df[df['Period Name'] == partido_seleccionado]
+        df = df[df['Partido + Fecha'] == partido_seleccionado]
     if tiempo_seleccionado != 'Todos':
         df = df[df['Period Number'] == tiempo_seleccionado]
     if jugador_seleccionado != 'Todos':
@@ -83,48 +84,56 @@ if uploaded_files:
     st.title("Match GPS Report")
 
     if jugador_seleccionado == 'Todos':
-        grouped = df.groupby('Player Name').agg({col: 'sum' for col in selected_metrics.values()}).reset_index()
-        grouped = grouped.rename(columns={v: k for k, v in selected_metrics.items()})
-        grouped = grouped.sort_values(by='Distancia Total (m)', ascending=False)
+        columns_existentes = [col for col in selected_metrics.values() if col in df.columns]
+        grouped = df.groupby('Player Name').agg({col: 'sum' for col in columns_existentes}).reset_index()
+        rename_dict = {v: k for k, v in selected_metrics.items() if v in columns_existentes}
+        grouped = grouped.rename(columns=rename_dict)
+
+        if 'Distancia Total (m)' in grouped.columns:
+            grouped = grouped.sort_values(by='Distancia Total (m)', ascending=False)
 
         st.subheader("Visualización de Jugadores")
         fig = go.Figure()
 
-        fig.add_trace(go.Bar(
-            x=grouped['Player Name'],
-            y=grouped['Distancia Total (m)'],
-            name='Total Distance',
-            marker_color='dodgerblue',
-            text=grouped['Distancia Total (m)'].round(0),
-            textposition='outside'
-        ))
+        if 'Distancia Total (m)' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped['Player Name'],
+                y=grouped['Distancia Total (m)'],
+                name='Total Distance',
+                marker_color='dodgerblue',
+                text=grouped['Distancia Total (m)'].round(0),
+                textposition='outside'
+            ))
 
-        fig.add_trace(go.Bar(
-            x=grouped['Player Name'],
-            y=grouped['Distancia Tempo (m)'],
-            name='Tempo',
-            marker_color='coral',
-            text=grouped['Distancia Tempo (m)'].round(0),
-            textposition='inside'
-        ))
+        if 'Distancia Tempo (m)' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped['Player Name'],
+                y=grouped['Distancia Tempo (m)'],
+                name='Tempo',
+                marker_color='coral',
+                text=grouped['Distancia Tempo (m)'].round(0),
+                textposition='inside'
+            ))
 
-        fig.add_trace(go.Bar(
-            x=grouped['Player Name'],
-            y=grouped['Distancia HSR (m)'],
-            name='HSR',
-            marker_color='hotpink',
-            text=grouped['Distancia HSR (m)'].round(0),
-            textposition='inside'
-        ))
+        if 'Distancia HSR (m)' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped['Player Name'],
+                y=grouped['Distancia HSR (m)'],
+                name='HSR',
+                marker_color='hotpink',
+                text=grouped['Distancia HSR (m)'].round(0),
+                textposition='inside'
+            ))
 
-        fig.add_trace(go.Bar(
-            x=grouped['Player Name'],
-            y=grouped['Distancia Sprint (m)'],
-            name='Sprint',
-            marker_color='goldenrod',
-            text=grouped['Distancia Sprint (m)'].round(0),
-            textposition='inside'
-        ))
+        if 'Distancia Sprint (m)' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped['Player Name'],
+                y=grouped['Distancia Sprint (m)'],
+                name='Sprint',
+                marker_color='goldenrod',
+                text=grouped['Distancia Sprint (m)'].round(0),
+                textposition='inside'
+            ))
 
         fig.update_layout(
             barmode='group',
