@@ -1,9 +1,9 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import re
 import base64
-import io
 from fpdf import FPDF
 
 st.set_page_config(layout="wide")
@@ -32,15 +32,17 @@ labels = {
         "acc": "Accelerations (#)",
         "dec": "Decelerations (#)",
         "load": "Player Load",
-        "impacts": "Impacts Count",
-        "work_rate": "Work Rate (m/min)",
-        "power_score": "Power Score",
-        "work_ratio": "Work Ratio (%)",
-        "max_acc": "Max Acceleration (m/s²)",
-        "max_dec": "Max Deceleration (m/s²)",
-        "power_plays": "Power Plays",
-        "session_score": "Session Score (%)",
-        "rhie": "RHIE Count"
+        "rhie": "RHIE Count",
+        "create_pdf": "📄 Generate PDF Report",
+        "download_pdf": "📥 Download PDF Report",
+        "avg_of": "Average of",
+        "Carga": "Load",
+        "Velocidad e Intensidad": "Speed & Intensity",
+        "Aceleración y Desaceleración": "Acceleration & Deceleration",
+        "Distancias": "Distances",
+        "Esfuerzos Repetidos": "Repeated High-Intensity Efforts",
+        "pdf_title": "Team GPS Report",
+        "pdf_file": "gps_report.pdf"
     },
     "Español": {
         "title": "Informe GPS del Partido",
@@ -61,49 +63,88 @@ labels = {
         "acc": "Aceleraciones (#)",
         "dec": "Deceleraciones (#)",
         "load": "Carga del Jugador",
-        "impacts": "Recuento de Impactos",
-        "work_rate": "Índice de Trabajo (m/min)",
-        "power_score": "Puntuación de Potencia",
-        "work_ratio": "Ratio de Trabajo (%)",
-        "max_acc": "Aceleración Máxima (m/s²)",
-        "max_dec": "Desaceleración Máxima (m/s²)",
-        "power_plays": "Jugadas de Potencia",
-        "session_score": "Puntuación de la Sesión (%)",
-        "rhie": "Esfuerzos Repetidos Alta Intensidad"
+        "rhie": "Esfuerzos Repetidos Alta Intensidad",
+        "create_pdf": "📄 Crear Informe PDF",
+        "download_pdf": "📥 Descargar Informe PDF",
+        "avg_of": "Promedio de",
+        "Carga": "Carga",
+        "Velocidad e Intensidad": "Velocidad e Intensidad",
+        "Aceleración y Desaceleración": "Aceleración y Desaceleración",
+        "Distancias": "Distancias",
+        "Esfuerzos Repetidos": "Esfuerzos Repetidos",
+        "pdf_title": "Informe GPS del Equipo",
+        "pdf_file": "informe_gps.pdf"
     }
 }[lang]
 
-# Estilos
+# Estilos neón
 st.markdown("""
     <style>
         .metric-box {
-            background: linear-gradient(135deg, #1a1a1a, #333333);
-            color: #ff0040;
+            background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+            color: #39ff14;
             padding: 12px;
             border-radius: 10px;
             text-align: center;
             margin: 6px;
-            box-shadow: 0 0 8px #ff0040;
+            box-shadow: 0 0 12px #39ff14;
         }
         .metric-title {
             font-size: 16px;
-            color: white;
+            color: #00ffff;
         }
         .metric-value {
             font-size: 26px;
             font-weight: bold;
-            color: white;
+            color: #ffffff;
         }
         body {
-            background-color: #111;
+            background-color: #0d0d0d;
         }
         .stApp {
-            background-image: linear-gradient(to right, #111 0%, #222 100%);
+            background-image: linear-gradient(to right, #0d0d0d 0%, #1a1a1a 100%);
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
+def generate_pdf(title, summary, avg_data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=title, ln=True, align='C')
+    pdf.ln(10)
+    for k, v in summary.items():
+        pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
+    pdf.ln(5)
+    for cat, items in avg_data.items():
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(200, 10, txt=f"{labels['avg_of']} {cat}", ln=True)
+        pdf.set_font("Arial", size=11)
+        for label, val in items:
+            pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
+        pdf.ln(3)
+    return pdf.output(dest='S').encode('latin-1')
+
+def neon_bar_chart(df, label, column):
+    fig = go.Figure(go.Bar(
+        x=df[column],
+        y=df['Player Name'],
+        orientation='h',
+        text=df[column].round(1),
+        textposition='outside',
+        marker_color='lime'
+    ))
+    fig.update_layout(
+        height=400,
+        xaxis_title=label,
+        yaxis_title=labels["player"],
+        plot_bgcolor='#0d0d0d',
+        paper_bgcolor='#0d0d0d',
+        font=dict(color='white')
+    )
+    return fig
+
+# Sidebar y lógica
 st.sidebar.header("Filtros")
 uploaded_files = st.sidebar.file_uploader(labels["upload"], type=["csv"], accept_multiple_files=True)
 
@@ -174,29 +215,15 @@ if uploaded_files:
         st.subheader(f"{labels['averages']}: {jugador}" if jugador != labels["all"] else labels['averages'])
 
         grouped_metrics = {
-            "Carga": [
-                labels["load"], "Peak Player Load", "Player Load Work Time", "Player Load Rest Time", "Player Load Work:Rest"
-            ],
-            "Velocidad e Intensidad": [
-                labels["max_speed"], "Velocity Exertion", "Velocity Exertion Per Min"
-            ],
-            "Aceleración y Desaceleración": [
-                labels["acc"], labels["dec"], "Acceleration Load", "Acceleration Density Index"
-            ],
-            "Distancias": [
-                labels["distance"], labels["tempo"], labels["hsr"], labels["sprint"], labels["sprint_count"]
-            ],
-            "Esfuerzos Repetidos": [
-                labels["rhie"]
-            ]
+            labels["Carga"]: [labels["load"], "Peak Player Load", "Player Load Work Time", "Player Load Rest Time", "Player Load Work:Rest"],
+            labels["Velocidad e Intensidad"]: [labels["max_speed"], "Velocity Exertion", "Velocity Exertion Per Min"],
+            labels["Aceleración y Desaceleración"]: [labels["acc"], labels["dec"], "Acceleration Load", "Acceleration Density Index"],
+            labels["Distancias"]: [labels["distance"], labels["tempo"], labels["hsr"], labels["sprint"], labels["sprint_count"]],
+            labels["Esfuerzos Repetidos"]: [labels["rhie"]]
         }
 
-        if st.button("📄 Crear Informe PDF"):
-            resumen = {
-                "Partido": partido,
-                "Fecha": df['Fecha CSV'].iloc[0] if 'Fecha CSV' in df else 'N/A',
-                "Jugador": jugador
-            }
+        if st.button(labels["create_pdf"]):
+            resumen = {"Partido": partido, "Fecha": df['Fecha CSV'].iloc[0], "Jugador": jugador}
             resumen_avg = {}
             for group, keys in grouped_metrics.items():
                 items = []
@@ -209,31 +236,13 @@ if uploaded_files:
                 if items:
                     resumen_avg[group] = items
 
-            def generate_pdf(title, summary, avg_data):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", size=12)
-                pdf.cell(200, 10, txt=title, ln=True, align='C')
-                pdf.ln(10)
-                for k, v in summary.items():
-                    pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
-                pdf.ln(5)
-                for cat, items in avg_data.items():
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(200, 10, txt=cat, ln=True)
-                    pdf.set_font("Arial", size=11)
-                    for label, val in items:
-                        pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
-                    pdf.ln(3)
-                return pdf.output(dest='S').encode('latin-1')
-
-            pdf_bytes = generate_pdf("Reporte GPS - Cavalry FC", resumen, resumen_avg)
+            pdf_bytes = generate_pdf(labels["pdf_title"], resumen, resumen_avg)
             b64 = base64.b64encode(pdf_bytes).decode()
-            href = f'<a href="data:application/octet-stream;base64,{b64}" download="informe_gps.pdf">📥 Descargar Informe PDF</a>'
+            href = f'<a href="data:application/octet-stream;base64,{b64}" download="{labels["pdf_file"]}">{labels["download_pdf"]}</a>'
             st.markdown(href, unsafe_allow_html=True)
 
         for group, keys in grouped_metrics.items():
-            st.markdown(f"### {group}")
+            st.markdown(f"### {labels['avg_of']} {group}")
             metric_items = [(k, metrics[k]) for k in keys if k in metrics and metrics[k] in df_grouped.columns]
             for i in range(0, len(metric_items), 4):
                 metric_cols = st.columns(4)
@@ -253,15 +262,7 @@ if uploaded_files:
             if v in df.columns:
                 st.subheader(k)
                 chart_df = df.groupby('Player Name')[v].sum().reset_index().sort_values(v, ascending=True)
-                fig = go.Figure(go.Bar(
-                    x=chart_df[v],
-                    y=chart_df['Player Name'],
-                    orientation='h',
-                    text=chart_df[v].round(1),
-                    textposition='outside',
-                    marker_color='crimson'
-                ))
-                fig.update_layout(height=400, xaxis_title=k, yaxis_title=labels["player"])
+                fig = neon_bar_chart(chart_df, k, v)
                 st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Cargue uno o más archivos CSV para comenzar / Upload one or more CSV files to begin.")
