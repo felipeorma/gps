@@ -162,10 +162,11 @@ if uploaded_files:
         st.subheader(labels["averages"])
 
         metric_labels = list(metrics.items())
-        metric_cols = st.columns(4)
         for i, (k, v) in enumerate(metric_labels):
             if v in df_grouped.columns:
                 avg = df_grouped[v].mean()
+                if i % 4 == 0:
+                    metric_cols = st.columns(4)
                 col = metric_cols[i % 4]
                 col.markdown(f"""
                     <div class='metric-box'>
@@ -193,4 +194,3 @@ if uploaded_files:
 
 else:
     st.info("Cargue uno o más archivos CSV para comenzar / Upload one or more CSV files to begin.")
-
