@@ -182,13 +182,18 @@ def generate_pdf(title, summary, avg_data, radar_data=None):
             pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
         pdf.ln(3)
     if radar_data:
-        fig = create_radar_chart(radar_data, "Radar")
-        radar_path = "radar_temp.png"
-        fig.write_image(radar_path)
-        pdf.add_page()
-        pdf.image(radar_path, x=30, w=150)
-        os.remove(radar_path)
+        try:
+            fig = create_radar_chart(radar_data, "Radar")
+            radar_path = "radar_temp.png"
+            fig.write_image(radar_path)
+            pdf.add_page()
+            pdf.image(radar_path, x=30, w=150)
+            os.remove(radar_path)
+        except Exception as e:
+            pdf.ln(10)
+            pdf.cell(200, 10, txt=f"Radar chart error: {e}", ln=True)
     return pdf.output(dest='S').encode('latin-1')
+
 
 
 
