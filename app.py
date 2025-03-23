@@ -164,7 +164,7 @@ def create_radar_chart(data_dict, title):
 
 # Función PDF con radar
 
-def generate_pdf(title, summary, avg_data, radar_data=None):
+def generate_pdf(title, summary, avg_data, radar_data=None, bar_charts=None):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -181,6 +181,7 @@ def generate_pdf(title, summary, avg_data, radar_data=None):
         for label, val in items:
             pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
         pdf.ln(3)
+
     if radar_data:
         try:
             fig = create_radar_chart(radar_data, "Radar")
@@ -192,6 +193,21 @@ def generate_pdf(title, summary, avg_data, radar_data=None):
         except Exception as e:
             pdf.ln(10)
             pdf.cell(200, 10, txt=f"Radar chart error: {e}", ln=True)
+
+    if bar_charts:
+        for chart in bar_charts:
+            try:
+                path = chart.get("path")
+                title = chart.get("title")
+                if path and os.path.exists(path):
+                    pdf.add_page()
+                    pdf.set_font("Arial", 'B', 14)
+                    pdf.cell(200, 10, txt=title, ln=True, align='C')
+                    pdf.image(path, x=30, w=150)
+                    os.remove(path)
+            except Exception as e:
+                pdf.cell(200, 10, txt=f"Bar chart error: {e}", ln=True)
+
     return pdf.output(dest='S').encode('latin-1')
 
 
