@@ -122,29 +122,38 @@ if uploaded_file:
         player_data = full_df[full_df['Player Name'] == selected_player]
         st.subheader(f"Promedios de {selected_player}")
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Distancia Total (m)", round(player_data['Work Rate Total Dist'].mean(), 2))
-        col2.metric("Carga Aceleración", round(player_data['Acceleration Load'].mean(), 2))
-        col3.metric("Velocidad Máxima (m/s)", round(player_data['Max Velocity [ Per Max ]'].mean(), 2))
-
-        st.divider()
-
-        st.subheader(f"Métrica seleccionada de {selected_player}")
         selected_player_metric = st.selectbox("Selecciona una métrica para el jugador", list(selected_metrics.keys()))
         col_name = selected_metrics[selected_player_metric]
-        metric_value = round(player_data[col_name].mean(), 2)
 
-        fig = px.bar(
-            x=[selected_player_metric],
-            y=[metric_value],
-            text=[f"{metric_value}"],
-            title=f"{selected_player_metric} - {selected_player}"
+        player_first = player_data[player_data['Period Number'] == 1][col_name].mean()
+        player_second = player_data[player_data['Period Number'] == 2][col_name].mean()
+        total = player_first + player_second
+
+        fig_player = go.Figure()
+        fig_player.add_trace(go.Bar(
+            x=['1er Tiempo'],
+            y=[player_first],
+            name='1T',
+            marker_color='lightskyblue',
+            text=[f"{player_first:.2f}"],
+            textposition='outside'
+        ))
+        fig_player.add_trace(go.Bar(
+            x=['2do Tiempo'],
+            y=[player_second],
+            name='2T',
+            marker_color='tomato',
+            text=[f"{player_second:.2f}"],
+            textposition='outside'
+        ))
+        fig_player.update_layout(
+            barmode='stack',
+            title=f"{selected_player_metric} - {selected_player} (Total: {total:.2f})",
+            yaxis_title=selected_player_metric,
+            showlegend=True
         )
-        fig.update_traces(textposition='outside')
-        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        st.plotly_chart(fig)
+        st.plotly_chart(fig_player)
 
-        # Mostrar fecha de los datos si existe
         if 'Date' in df.columns:
             fecha = df['Date'].iloc[0]
             st.caption(f"Fecha del partido: {fecha}")
