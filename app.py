@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import re
+import os
 
 # Cargar archivo CSV
 st.sidebar.header("Carga de datos")
@@ -11,6 +12,11 @@ uploaded_file = st.sidebar.file_uploader("Sube el archivo del partido (.csv)", t
 if uploaded_file:
     df = pd.read_csv(uploaded_file, delimiter=';')
     df.columns = df.columns.str.strip()
+
+    # Extraer fecha desde nombre del archivo si no está en el contenido
+    file_name = uploaded_file.name
+    fecha_csv = pd.to_datetime(uploaded_file.name.split('_')[-3:], errors='coerce').strftime('%Y-%m-%d') if '_' in uploaded_file.name else 'Sin Fecha'
+    df['Fecha CSV'] = fecha_csv
 
     raw_name = df['Period Name'].iloc[0] if 'Period Name' in df.columns else "Partido 1"
     pattern = re.compile(r"F\d+_\w+_(.+?) VS (.+)", re.IGNORECASE)
@@ -27,6 +33,7 @@ if uploaded_file:
     st.title(f"Dashboard GPS - {titulo_partido}")
     st.sidebar.success("Archivo cargado exitosamente")
     st.sidebar.write(titulo_partido)
+    st.sidebar.caption(f"Fecha del archivo: {fecha_csv}")
 
     player_list = ['Todos'] + sorted(df['Player Name'].unique())
     selected_player = st.sidebar.selectbox("Selecciona un jugador", player_list)
@@ -163,9 +170,8 @@ if uploaded_file:
         )
         st.plotly_chart(fig_player)
 
-        if 'Date' in df.columns:
-            fecha = df['Date'].iloc[0]
-            st.caption(f"Fecha del partido: {fecha}")
+        st.caption(f"Fecha del partido: {fecha_csv}")
 
 else:
     st.info("Por favor, sube un archivo CSV para comenzar.")
+
