@@ -10,15 +10,17 @@ st.sidebar.header("Carga de datos")
 uploaded_file = st.sidebar.file_uploader("Sube el archivo del partido (.csv)", type=["csv"])
 
 if uploaded_file:
-    # Leer el archivo con separador ;
+    # Leer el archivo con separador ; y limpiar nombres de columnas
     df = pd.read_csv(uploaded_file, delimiter=';')
+    df.columns = df.columns.str.strip()  # quitar espacios
 
     # Mostrar info general
+    partido_nombre = df['Period Name'].iloc[0] if 'Period Name' in df.columns else "Partido 1"
     st.sidebar.success("Archivo cargado exitosamente")
-    st.sidebar.write("Partido 1")
+    st.sidebar.write(partido_nombre)
 
     # Resultado del partido (entrada manual)
-    match_result = st.sidebar.text_input("Resultado del partido", value="Cavalry FC vs Comerciantes Unidos 2-1")
+    match_result = st.sidebar.text_input("Resultado del partido", value=f"{partido_nombre} - resultado")
 
     # Lista de jugadores
     player_list = ['Todos'] + sorted(df['Player Name'].unique())
@@ -26,8 +28,8 @@ if uploaded_file:
 
     # Métricas a mostrar
     selected_metrics = {
-        'Distancia Total (m)': ' Work Rate Total Dist',
-        'Carga de Aceleración': ' Acceleration Load',
+        'Distancia Total (m)': 'Work Rate Total Dist',
+        'Carga de Aceleración': 'Acceleration Load',
         'Velocidad Máxima (m/s)': 'Max Velocity [ Per Max ]',
         'Aceleraciones Altas': 'Acc3 Eff (Gen2)',
         'Aceleraciones Medias': 'Acc2 Eff (Gen2)',
@@ -52,12 +54,12 @@ if uploaded_file:
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Distancia Total Promedio (m) - Total", round(display_df['Distancia Total (m)'].mean(), 1))
-    col2.metric("1er Tiempo", round(first_half[' Work Rate Total Dist'].mean(), 1))
-    col3.metric("2do Tiempo", round(second_half[' Work Rate Total Dist'].mean(), 1))
+    col2.metric("1er Tiempo", round(first_half['Work Rate Total Dist'].mean(), 1))
+    col3.metric("2do Tiempo", round(second_half['Work Rate Total Dist'].mean(), 1))
 
     col1.metric("Carga Aceleración Promedio - Total", round(display_df['Carga de Aceleración'].mean(), 1))
-    col2.metric("1er Tiempo", round(first_half[' Acceleration Load'].mean(), 1))
-    col3.metric("2do Tiempo", round(second_half[' Acceleration Load'].mean(), 1))
+    col2.metric("1er Tiempo", round(first_half['Acceleration Load'].mean(), 1))
+    col3.metric("2do Tiempo", round(second_half['Acceleration Load'].mean(), 1))
 
     col1.metric("Velocidad Máxima Promedio - Total", round(display_df['Velocidad Máxima (m/s)'].mean(), 2))
     col2.metric("1er Tiempo", round(first_half['Max Velocity [ Per Max ]'].mean(), 2))
