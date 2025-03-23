@@ -131,26 +131,35 @@ if uploaded_file:
 
         fig_player = go.Figure()
         fig_player.add_trace(go.Bar(
-            x=['1er Tiempo'],
+            x=[selected_player],
             y=[player_first],
-            name='1T',
+            name='1er Tiempo',
             marker_color='lightskyblue',
             text=[f"{player_first:.2f}"],
-            textposition='outside'
+            textposition='none'
         ))
         fig_player.add_trace(go.Bar(
-            x=['2do Tiempo'],
+            x=[selected_player],
             y=[player_second],
-            name='2T',
+            name='2do Tiempo',
             marker_color='tomato',
             text=[f"{player_second:.2f}"],
-            textposition='outside'
+            textposition='none'
         ))
         fig_player.update_layout(
             barmode='stack',
             title=f"{selected_player_metric} - {selected_player} (Total: {total:.2f})",
             yaxis_title=selected_player_metric,
-            showlegend=True
+            showlegend=True,
+            annotations=[
+                dict(
+                    x=selected_player,
+                    y=total,
+                    text=f"Total: {total:.2f}",
+                    showarrow=False,
+                    yshift=10
+                )
+            ]
         )
         st.plotly_chart(fig_player)
 
