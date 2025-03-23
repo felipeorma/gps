@@ -5,8 +5,30 @@ import plotly.graph_objects as go
 import re
 import os
 
+st.set_page_config(layout="wide")
+
+st.markdown("""
+    <style>
+        .metric-box {
+            background-color: #003C3C;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 5px;
+        }
+        .metric-title {
+            font-size: 16px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Cargar múltiples archivos CSV
-st.sidebar.header("Carga de datos")
+st.sidebar.header("Filtros")
 uploaded_files = st.sidebar.file_uploader("Sube uno o más archivos del partido (.csv)", type=["csv"], accept_multiple_files=True)
 
 if uploaded_files:
@@ -29,30 +51,6 @@ if uploaded_files:
 
     full_df = pd.concat(all_dfs, ignore_index=True)
 
-    # Lista de partidos únicos
-    partidos = full_df['Period Name'].dropna().unique().tolist()
-    partido_seleccionado = st.sidebar.selectbox("Selecciona un partido", partidos)
-
-    # Filtrar por partido
-    df = full_df[full_df['Period Name'] == partido_seleccionado].copy()
-
-    # Título con formato limpio y resultado
-    pattern = re.compile(r"F\d+_\w+_(.+?) VS (.+)", re.IGNORECASE)
-    match = pattern.search(partido_seleccionado)
-    equipo_1, equipo_2 = match.groups() if match else ("Equipo 1", "Equipo 2")
-    resultado_match = re.search(r"(.+?) (\d+-\d+)$", equipo_2.strip())
-    if resultado_match:
-        equipo_2_nombre, resultado = resultado_match.groups()
-        titulo_partido = f"{equipo_1.strip()} vs {equipo_2_nombre.strip()} ({resultado})"
-    else:
-        titulo_partido = f"{equipo_1.strip()} vs {equipo_2.strip()}"
-
-    st.title(f"Dashboard GPS - {titulo_partido}")
-
-    # Selección de jugador
-    player_list = ['Todos'] + sorted(df['Player Name'].unique())
-    selected_player = st.sidebar.selectbox("Selecciona un jugador", player_list)
-
     # Diccionario de métricas
     selected_metrics = {
         'Distancia Total (m)': 'Work Rate Total Dist',
@@ -66,72 +64,57 @@ if uploaded_files:
         'Deceleraciones Bajas (#)': 'Dec1 Eff (Gen2)'
     }
 
-    first_half = df[df['Period Number'] == 1] if 'Period Number' in df.columns else pd.DataFrame()
-    second_half = df[df['Period Number'] == 2] if 'Period Number' in df.columns else pd.DataFrame()
+    # Lista de partidos únicos
+    partidos = ['Todos'] + sorted(full_df['Period Name'].dropna().unique().tolist())
+    partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
-    st.subheader("Promedios de Jugador(es)")
+    # Lista de jugadores únicos
+    jugadores = ['Todos'] + sorted(full_df['Player Name'].dropna().unique().tolist())
+    jugador_seleccionado = st.sidebar.selectbox("Player Name", jugadores)
 
-    if selected_player == 'Todos':
-        display_df = df[['Player Name', 'Fecha CSV'] + list(selected_metrics.values())].copy()
-        display_df = display_df.rename(columns={v: k for k, v in selected_metrics.items()})
+    # Filtrar por partido
+    df = full_df.copy()
+    if partido_seleccionado != 'Todos':
+        df = df[df['Period Name'] == partido_seleccionado]
 
-        st.dataframe(display_df)
+    if jugador_seleccionado != 'Todos':
+        df = df[df['Player Name'] == jugador_seleccionado]
 
-        st.subheader("Comparativa entre jugadores")
-        selected_chart_metric = st.selectbox("Selecciona una métrica para comparar", list(selected_metrics.keys()))
-        col_name = selected_metrics[selected_chart_metric]
+    st.title("Match GPS Report")
 
-        # Total por jugador
-        total_df = df.groupby('Player Name')[col_name].sum().reset_index(name='Total')
-        total_df = total_df.sort_values(by='Total', ascending=False)
+    # Mostrar métricas generales (similares a parte inferior del ejemplo visual)
+    avg_data = df.groupby('Player Name').agg({
+        'Work Rate Total Dist': 'mean',
+        'Acceleration Load': 'mean',
+        'Max Velocity [ Per Max ]': 'mean',
+        'Acc3 Eff (Gen2)': 'mean',
+        'Acc2 Eff (Gen2)': 'mean',
+        'Acc1 Eff (Gen2)': 'mean',
+        'Dec3 Eff (Gen2)': 'mean',
+        'Dec2 Eff (Gen2)': 'mean',
+        'Dec1 Eff (Gen2)': 'mean'
+    }).reset_index()
 
-        fig_total = px.bar(total_df, x='Player Name', y='Total', text='Total', title=f"{selected_chart_metric} Total por Jugador")
-        fig_total.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-        st.plotly_chart(fig_total)
+    td_avg = round(avg_data['Work Rate Total Dist'].mean(), 2)
+    acc_avg = round(avg_data['Acceleration Load'].mean(), 2)
+    vmax_avg = round(avg_data['Max Velocity [ Per Max ]'].mean(), 2)
+    acc_total = avg_data[['Acc3 Eff (Gen2)', 'Acc2 Eff (Gen2)', 'Acc1 Eff (Gen2)']].sum(axis=1).mean()
+    dec_total = avg_data[['Dec3 Eff (Gen2)', 'Dec2 Eff (Gen2)', 'Dec1 Eff (Gen2)']].sum(axis=1).mean()
 
-    else:
-        player_df = df[df['Player Name'] == selected_player].copy()
-        st.subheader(f"Métricas de {selected_player}")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.markdown(f"<div class='metric-box'><div class='metric-title'>TD Average</div><div class='metric-value'>{td_avg}</div></div>", unsafe_allow_html=True)
+    col2.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Load Avg</div><div class='metric-value'>{acc_avg}</div></div>", unsafe_allow_html=True)
+    col3.markdown(f"<div class='metric-box'><div class='metric-title'>Max Speed Avg</div><div class='metric-value'>{vmax_avg}</div></div>", unsafe_allow_html=True)
+    col4.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Total Avg</div><div class='metric-value'>{acc_total:.0f}</div></div>", unsafe_allow_html=True)
+    col5.markdown(f"<div class='metric-box'><div class='metric-title'>DEC Total Avg</div><div class='metric-value'>{dec_total:.0f}</div></div>", unsafe_allow_html=True)
 
-        selected_chart_metric = st.selectbox("Selecciona una métrica para el jugador", list(selected_metrics.keys()))
-        col_name = selected_metrics[selected_chart_metric]
+    st.divider()
 
-        resumen = player_df.groupby('Fecha CSV')[col_name].agg(["mean", "sum"]).reset_index()
-        resumen.columns = ['Fecha', 'Promedio', 'Total']
-        st.dataframe(resumen)
-
-        # Por tiempos en una sola barra (con validación)
-        periodos = player_df['Period Number'].dropna().unique()
-        first = player_df[player_df['Period Number'] == 1][col_name].sum() if 1 in periodos else 0
-        second = player_df[player_df['Period Number'] == 2][col_name].sum() if 2 in periodos else 0
-        total = first + second
-
-        fig_player = go.Figure()
-        fig_player.add_trace(go.Bar(
-            x=[selected_player],
-            y=[first],
-            name='1er Tiempo',
-            marker_color='lightskyblue',
-            text=[f"{first:.2f}"],
-            textposition='none'
-        ))
-        fig_player.add_trace(go.Bar(
-            x=[selected_player],
-            y=[second],
-            name='2do Tiempo',
-            marker_color='tomato',
-            text=[f"{second:.2f}"],
-            textposition='none'
-        ))
-        fig_player.update_layout(
-            barmode='stack',
-            title=f"{selected_chart_metric} - {selected_player} (Total: {total:.2f})",
-            yaxis_title=selected_chart_metric,
-            annotations=[
-                dict(x=selected_player, y=total, text=f"Total: {total:.2f}", showarrow=False, yshift=10)
-            ]
-        )
-        st.plotly_chart(fig_player)
+    # Tabla principal con todos los jugadores
+    if jugador_seleccionado == 'Todos':
+        tabla = df.groupby('Player Name')[list(selected_metrics.values())].mean().reset_index()
+        tabla = tabla.rename(columns={v: k for k, v in selected_metrics.items()})
+        st.dataframe(tabla)
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
