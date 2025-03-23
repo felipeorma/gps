@@ -77,26 +77,27 @@ labels = {
     }
 }[lang]
 
-# Estilos neón
+# Estilos neón rojo
 st.markdown("""
     <style>
         .metric-box {
-            background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
-            color: #39ff14;
+            background: linear-gradient(135deg, #1a0000, #330000);
+            color: #ff0033;
             padding: 12px;
             border-radius: 10px;
             text-align: center;
             margin: 6px;
-            box-shadow: 0 0 12px #39ff14;
+            box-shadow: 0 0 12px #ff0033;
         }
         .metric-title {
             font-size: 16px;
-            color: #00ffff;
+            font-weight: bold;
+            color: white;
         }
         .metric-value {
             font-size: 26px;
             font-weight: bold;
-            color: #ffffff;
+            color: white;
         }
         body {
             background-color: #0d0d0d;
