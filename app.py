@@ -1,9 +1,9 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import re
 import base64
+import io
 from fpdf import FPDF
 
 st.set_page_config(layout="wide")
@@ -42,7 +42,10 @@ labels = {
         "Distancias": "Distances",
         "Esfuerzos Repetidos": "Repeated High-Intensity Efforts",
         "pdf_title": "Team GPS Report",
-        "pdf_file": "gps_report.pdf"
+        "pdf_file": "gps_report.pdf",
+        "Fecha": "Date",
+        "Partido": "Match",
+        "Jugador": "Player"
     },
     "Español": {
         "title": "Informe GPS del Partido",
@@ -73,7 +76,10 @@ labels = {
         "Distancias": "Distancias",
         "Esfuerzos Repetidos": "Esfuerzos Repetidos",
         "pdf_title": "Informe GPS del Equipo",
-        "pdf_file": "informe_gps.pdf"
+        "pdf_file": "informe_gps.pdf",
+        "Fecha": "Fecha",
+        "Partido": "Partido",
+        "Jugador": "Jugador"
     }
 }[lang]
 
@@ -108,6 +114,28 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Función para gráficos estilo rojo neón
+
+def neon_bar_chart(df, label, column):
+    fig = go.Figure(go.Bar(
+        x=df[column],
+        y=df['Player Name'],
+        orientation='h',
+        text=df[column].round(1),
+        textposition='outside',
+        marker=dict(color='rgba(255, 0, 51, 0.7)')
+    ))
+    fig.update_layout(
+        height=400,
+        xaxis_title=label,
+        yaxis_title=labels["player"],
+        plot_bgcolor='#0d0d0d',
+        paper_bgcolor='#0d0d0d',
+        font=dict(color='white', size=12)
+    )
+    return fig
+
+# Función PDF con etiquetas dinámicas traducidas
 def generate_pdf(title, summary, avg_data):
     pdf = FPDF()
     pdf.add_page()
@@ -115,7 +143,8 @@ def generate_pdf(title, summary, avg_data):
     pdf.cell(200, 10, txt=title, ln=True, align='C')
     pdf.ln(10)
     for k, v in summary.items():
-        pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
+        k_translated = labels.get(k, k)
+        pdf.cell(200, 10, txt=f"{k_translated}: {v}", ln=True)
     pdf.ln(5)
     for cat, items in avg_data.items():
         pdf.set_font("Arial", 'B', 12)
@@ -125,25 +154,6 @@ def generate_pdf(title, summary, avg_data):
             pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
         pdf.ln(3)
     return pdf.output(dest='S').encode('latin-1')
-
-def neon_bar_chart(df, label, column):
-    fig = go.Figure(go.Bar(
-        x=df[column],
-        y=df['Player Name'],
-        orientation='h',
-        text=df[column].round(1),
-        textposition='outside',
-        marker_color='lime'
-    ))
-    fig.update_layout(
-        height=400,
-        xaxis_title=label,
-        yaxis_title=labels["player"],
-        plot_bgcolor='#0d0d0d',
-        paper_bgcolor='#0d0d0d',
-        font=dict(color='white')
-    )
-    return fig
 
 # Sidebar y lógica
 st.sidebar.header("Filtros")
