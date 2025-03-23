@@ -171,6 +171,52 @@ if uploaded_files:
         st.title(labels["title"])
 
     if not df.empty:
+        with st.sidebar:
+            import base64
+            import io
+            from fpdf import FPDF
+
+            def generate_pdf(title, summary, avg_data):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                pdf.cell(200, 10, txt=title, ln=True, align='C')
+                pdf.ln(10)
+                for k, v in summary.items():
+                    pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
+                pdf.ln(5)
+                for cat, items in avg_data.items():
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(200, 10, txt=cat, ln=True)
+                    pdf.set_font("Arial", size=11)
+                    for label, val in items:
+                        pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
+                    pdf.ln(3)
+                return pdf.output(dest='S').encode('latin-1')
+
+            if st.button("📄 Crear Informe PDF"):
+                resumen = {
+                    "Partido": partido,
+                    "Fecha": df['Fecha CSV'].iloc[0] if 'Fecha CSV' in df else 'N/A',
+                    "Jugador": jugador
+                }
+                resumen_avg = {}
+                for group, keys in grouped_metrics.items():
+                    items = []
+                    for k in keys:
+                        col_key = metrics.get(k)
+                        if col_key in df_grouped.columns:
+                            val = df_grouped[col_key].mean()
+                            if not pd.isna(val) and val != 0:
+                                items.append((k, val))
+                    if items:
+                        resumen_avg[group] = items
+
+                pdf_bytes = generate_pdf("Reporte GPS - Cavalry FC", resumen, resumen_avg)
+                b64 = base64.b64encode(pdf_bytes).decode()
+                href = f'<a href="data:application/octet-stream;base64,{b64}" download="informe_gps.pdf">📥 Descargar Informe PDF</a>'
+                st.markdown(href, unsafe_allow_html=True)
+
         columns_exist = [v for v in metrics.values() if v in df.columns]
         df[columns_exist] = df[columns_exist].apply(pd.to_numeric, errors='coerce')
         df_grouped = df.groupby('Player Name')[columns_exist].mean().reset_index()
