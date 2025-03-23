@@ -170,12 +170,13 @@ if uploaded_files:
             for j, (k, v) in enumerate(metric_labels[i:i+4]):
                 if v in df_grouped.columns:
                     avg = df_grouped[v].mean()
-                    metric_cols[j].markdown(f"""
-                        <div class='metric-box'>
-                            <div class='metric-title'>{k}</div>
-                            <div class='metric-value'>{avg:.0f}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    if not pd.isna(avg) and avg != 0:
+                        metric_cols[j].markdown(f"""
+                            <div class='metric-box'>
+                                <div class='metric-title'>{k}</div>
+                                <div class='metric-value'>{avg:.0f}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
 
         st.divider()
 
