@@ -169,16 +169,7 @@ if uploaded_files:
         st.title(f"{labels['title']} | {partido}")
     else:
         st.title(labels["title"])
-        df = df[df['Player Name'] == jugador]
 
-            if jugador != labels["all"] and partido != labels["all"]:
-        st.title(f"{labels['title']} - {jugador} | {partido}")
-        elif jugador != labels["all"]:
-        st.title(f"{labels['title']} - {jugador}")
-        elif partido != labels["all"]:
-        st.title(f"{labels['title']} | {partido}")
-        else:
-        st.title(labels["title"])
 
     if not df.empty:
         with st.sidebar:
