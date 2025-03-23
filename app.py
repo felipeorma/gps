@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import re
 import os
@@ -54,14 +53,13 @@ if uploaded_files:
     # Diccionario de métricas
     selected_metrics = {
         'Distancia Total (m)': 'Work Rate Total Dist',
-        'Carga de Aceleración': 'Acceleration Load',
+        'Distancia Tempo (m)': 'Tempo Distance (Gen2)',
+        'Distancia HSR (m)': 'HSR Eff Distance (Gen2)',
+        'Distancia Sprint (m)': 'Sprint Eff Distance (Gen2)',
+        'N° Sprints': 'Sprint Eff Count (Gen2)',
         'Velocidad Máxima (m/s)': 'Max Velocity [ Per Max ]',
-        'Aceleraciones Altas (#)': 'Acc3 Eff (Gen2)',
-        'Aceleraciones Medias (#)': 'Acc2 Eff (Gen2)',
-        'Aceleraciones Bajas (#)': 'Acc1 Eff (Gen2)',
-        'Deceleraciones Altas (#)': 'Dec3 Eff (Gen2)',
-        'Deceleraciones Medias (#)': 'Dec2 Eff (Gen2)',
-        'Deceleraciones Bajas (#)': 'Dec1 Eff (Gen2)'
+        'Aceleraciones (#)': 'Acc Eff Count (Gen2)',
+        'Deceleraciones (#)': 'Dec Eff Count (Gen2)'
     }
 
     partidos_unicos = full_df['Period Name'].dropna().unique().tolist()
@@ -84,54 +82,61 @@ if uploaded_files:
 
     st.title("Match GPS Report")
 
-    avg_data = df.groupby('Player Name').agg({
-        'Work Rate Total Dist': 'mean',
-        'Acceleration Load': 'mean',
-        'Max Velocity [ Per Max ]': 'mean',
-        'Acc3 Eff (Gen2)': 'mean',
-        'Acc2 Eff (Gen2)': 'mean',
-        'Acc1 Eff (Gen2)': 'mean',
-        'Dec3 Eff (Gen2)': 'mean',
-        'Dec2 Eff (Gen2)': 'mean',
-        'Dec1 Eff (Gen2)': 'mean'
-    }).reset_index()
-
-    td_avg = round(avg_data['Work Rate Total Dist'].mean(), 2)
-    acc_avg = round(avg_data['Acceleration Load'].mean(), 2)
-    vmax_avg = round(avg_data['Max Velocity [ Per Max ]'].mean(), 2)
-    acc_total = avg_data[['Acc3 Eff (Gen2)', 'Acc2 Eff (Gen2)', 'Acc1 Eff (Gen2)']].sum(axis=1).mean()
-    dec_total = avg_data[['Dec3 Eff (Gen2)', 'Dec2 Eff (Gen2)', 'Dec1 Eff (Gen2)']].sum(axis=1).mean()
-
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.markdown(f"<div class='metric-box'><div class='metric-title'>TD Average</div><div class='metric-value'>{td_avg}</div></div>", unsafe_allow_html=True)
-    col2.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Load Avg</div><div class='metric-value'>{acc_avg}</div></div>", unsafe_allow_html=True)
-    col3.markdown(f"<div class='metric-box'><div class='metric-title'>Max Speed Avg</div><div class='metric-value'>{vmax_avg}</div></div>", unsafe_allow_html=True)
-    col4.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Total Avg</div><div class='metric-value'>{acc_total:.0f}</div></div>", unsafe_allow_html=True)
-    col5.markdown(f"<div class='metric-box'><div class='metric-title'>DEC Total Avg</div><div class='metric-value'>{dec_total:.0f}</div></div>", unsafe_allow_html=True)
-
-    st.divider()
-
     if jugador_seleccionado == 'Todos':
-        tabla = df.groupby('Player Name')[list(selected_metrics.values())].mean().reset_index()
-        tabla = tabla.rename(columns={v: k for k, v in selected_metrics.items()})
+        grouped = df.groupby('Player Name').agg({col: 'sum' for col in selected_metrics.values()}).reset_index()
+        grouped = grouped.rename(columns={v: k for k, v in selected_metrics.items()})
+        grouped = grouped.sort_values(by='Distancia Total (m)', ascending=False)
 
-        st.subheader("Resumen por Jugador")
-        st.dataframe(tabla, use_container_width=True)
+        st.subheader("Visualización de Jugadores")
+        fig = go.Figure()
 
-        st.subheader("Gráfico de barras - Distancia Total por Jugador")
-        grafico = tabla.sort_values('Distancia Total (m)', ascending=False)
-        fig = px.bar(
-            grafico,
-            x='Player Name',
-            y='Distancia Total (m)',
-            text=grafico['Distancia Total (m)'].round(2),
-            labels={'Distancia Total (m)': 'Distancia Total (m)'},
-            height=500
+        fig.add_trace(go.Bar(
+            x=grouped['Player Name'],
+            y=grouped['Distancia Total (m)'],
+            name='Total Distance',
+            marker_color='dodgerblue',
+            text=grouped['Distancia Total (m)'].round(0),
+            textposition='outside'
+        ))
+
+        fig.add_trace(go.Bar(
+            x=grouped['Player Name'],
+            y=grouped['Distancia Tempo (m)'],
+            name='Tempo',
+            marker_color='coral',
+            text=grouped['Distancia Tempo (m)'].round(0),
+            textposition='inside'
+        ))
+
+        fig.add_trace(go.Bar(
+            x=grouped['Player Name'],
+            y=grouped['Distancia HSR (m)'],
+            name='HSR',
+            marker_color='hotpink',
+            text=grouped['Distancia HSR (m)'].round(0),
+            textposition='inside'
+        ))
+
+        fig.add_trace(go.Bar(
+            x=grouped['Player Name'],
+            y=grouped['Distancia Sprint (m)'],
+            name='Sprint',
+            marker_color='goldenrod',
+            text=grouped['Distancia Sprint (m)'].round(0),
+            textposition='inside'
+        ))
+
+        fig.update_layout(
+            barmode='group',
+            xaxis_title='Jugador',
+            yaxis_title='Metros / Métrica',
+            height=600,
+            legend_title_text='Métricas',
+            uniformtext_minsize=8,
+            uniformtext_mode='hide'
         )
-        fig.update_traces(textposition='outside')
-        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+
         st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
- 
