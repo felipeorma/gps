@@ -90,6 +90,12 @@ st.markdown("""
             font-weight: bold;
             color: white;
         }
+            body {
+            background-color: #111;
+        }
+        .stApp {
+            background-image: linear-gradient(to right, #111 0%, #222 100%);
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -164,10 +170,30 @@ if uploaded_files:
 
         st.subheader(labels["averages"])
 
-        metric_labels = list(metrics.items())
-        for i in range(0, len(metric_labels), 4):
-            metric_cols = st.columns(4)
-            for j, (k, v) in enumerate(metric_labels[i:i+4]):
+        grouped_metrics = {
+            "Carga": [
+                labels["load"], "Peak Player Load", "Player Load Work Time", "Player Load Rest Time", "Player Load Work:Rest"
+            ],
+            "Velocidad e Intensidad": [
+                labels["max_speed"], "Velocity Exertion", "Velocity Exertion Per Min"
+            ],
+            "Aceleración y Desaceleración": [
+                labels["acc"], labels["dec"], "Acceleration Load", "Acceleration Density Index"
+            ],
+            "Distancias": [
+                labels["distance"], labels["tempo"], labels["hsr"], labels["sprint"], labels["sprint_count"]
+            ],
+            "Esfuerzos Repetidos": [
+                labels["rhie"]
+            ]
+        }
+
+        for group, keys in grouped_metrics.items():
+            st.markdown(f"### {group}")
+            metric_items = [(k, metrics[k]) for k in keys if k in metrics and metrics[k] in df_grouped.columns]
+            for i in range(0, len(metric_items), 4):
+                metric_cols = st.columns(4)
+            for j, (k, v) in enumerate(metric_items[i:i+4]):
                 if v in df_grouped.columns:
                     avg = df_grouped[v].mean()
                     if not pd.isna(avg) and avg != 0:
