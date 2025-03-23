@@ -46,7 +46,7 @@ if uploaded_files:
 
         df['Fecha CSV'] = fecha
         df['Archivo'] = file.name
-        df['Partido + Fecha'] = df['Period Name'].astype(str) + ' | ' + fecha
+        df['Partido + Fecha'] = df['Period Name'].str.extract(r'(.*?)(?:\s*-\s*\d+)?$')[0] + ' | ' + fecha
         all_dfs.append(df)
 
     full_df = pd.concat(all_dfs, ignore_index=True)
@@ -67,8 +67,8 @@ if uploaded_files:
     partidos = ['Todos'] + partidos_unicos if len(partidos_unicos) > 1 else partidos_unicos
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
-    tiempos = ['Todos', 1, 2]
-    tiempo_seleccionado = st.sidebar.selectbox("Tiempo", tiempos)
+    tiempo_dict = {'Todos': 'Todos', 1: 'Primer Tiempo', 2: 'Segundo Tiempo'}
+    tiempo_seleccionado_raw = st.sidebar.selectbox("Tiempo", list(tiempo_dict.keys()), format_func=lambda x: tiempo_dict[x])
 
     jugadores = ['Todos'] + sorted(full_df['Player Name'].dropna().unique().tolist())
     jugador_seleccionado = st.sidebar.selectbox("Jugador", jugadores)
@@ -76,8 +76,8 @@ if uploaded_files:
     df = full_df.copy()
     if partido_seleccionado != 'Todos':
         df = df[df['Partido + Fecha'] == partido_seleccionado]
-    if tiempo_seleccionado != 'Todos':
-        df = df[df['Period Number'] == tiempo_seleccionado]
+    if tiempo_seleccionado_raw != 'Todos':
+        df = df[df['Period Number'] == tiempo_seleccionado_raw]
     if jugador_seleccionado != 'Todos':
         df = df[df['Player Name'] == jugador_seleccionado]
 
@@ -100,54 +100,28 @@ if uploaded_files:
         st.subheader("Visualización de Jugadores")
         fig = go.Figure()
 
-        if 'Distancia Total (m)' in grouped.columns:
-            fig.add_trace(go.Bar(
-                x=grouped['Player Name'],
-                y=grouped['Distancia Total (m)'],
-                name='Total Distance',
-                marker_color='dodgerblue',
-                text=grouped['Distancia Total (m)'].round(0),
-                textposition='outside'
-            ))
-
-        if 'Distancia Tempo (m)' in grouped.columns:
-            fig.add_trace(go.Bar(
-                x=grouped['Player Name'],
-                y=grouped['Distancia Tempo (m)'],
-                name='Tempo',
-                marker_color='coral',
-                text=grouped['Distancia Tempo (m)'].round(0),
-                textposition='inside'
-            ))
-
-        if 'Distancia HSR (m)' in grouped.columns:
-            fig.add_trace(go.Bar(
-                x=grouped['Player Name'],
-                y=grouped['Distancia HSR (m)'],
-                name='HSR',
-                marker_color='hotpink',
-                text=grouped['Distancia HSR (m)'].round(0),
-                textposition='inside'
-            ))
-
-        if 'Distancia Sprint (m)' in grouped.columns:
-            fig.add_trace(go.Bar(
-                x=grouped['Player Name'],
-                y=grouped['Distancia Sprint (m)'],
-                name='Sprint',
-                marker_color='goldenrod',
-                text=grouped['Distancia Sprint (m)'].round(0),
-                textposition='inside'
-            ))
+        for metric, color in zip(['Distancia Total (m)', 'Distancia Tempo (m)', 'Distancia HSR (m)', 'Distancia Sprint (m)'],
+                                  ['dodgerblue', 'coral', 'hotpink', 'goldenrod']):
+            if metric in grouped.columns:
+                fig.add_trace(go.Bar(
+                    y=grouped['Player Name'],
+                    x=grouped[metric],
+                    name=metric,
+                    orientation='h',
+                    marker_color=color,
+                    text=grouped[metric].round(0),
+                    textposition='inside'
+                ))
 
         fig.update_layout(
-            barmode='group',
-            xaxis_title='Jugador',
-            yaxis_title='Metros / Métrica',
-            height=600,
+            barmode='stack',
+            yaxis_title='Jugador',
+            xaxis_title='Metros / Métrica',
+            height=700,
             legend_title_text='Métricas',
             uniformtext_minsize=8,
-            uniformtext_mode='hide'
+            uniformtext_mode='hide',
+            yaxis={'categoryorder': 'total ascending'}
         )
 
         st.plotly_chart(fig, use_container_width=True)
