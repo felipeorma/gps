@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Título principal sin emojis para evitar UnicodeEncodeError
 st.title("Dashboard GPS - Cavalry FC")
@@ -87,15 +88,42 @@ if uploaded_file:
         st.dataframe(display_df)
 
         st.subheader("Comparativa entre jugadores")
-        metric_to_plot = st.selectbox("Selecciona la métrica para comparar", list(selected_metrics.keys()))
 
-        sorted_df = display_df.sort_values(by=metric_to_plot, ascending=False)
-        fig_bar = px.bar(sorted_df, x='Player Name', y=metric_to_plot, text=metric_to_plot,
-                         title=f"{metric_to_plot} por jugador (ordenado)")
-        fig_bar.update_traces(texttemplate='%{text:.2s}', textposition='inside')
-        fig_bar.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        # Calcular distancia 1T y 2T por jugador
+        dist_1t = first_half.groupby('Player Name')['Work Rate Total Dist'].sum().reset_index()
+        dist_2t = second_half.groupby('Player Name')['Work Rate Total Dist'].sum().reset_index()
+        merged = pd.merge(dist_1t, dist_2t, on='Player Name', suffixes=(' 1T', ' 2T'))
+        merged['Total'] = merged['Work Rate Total Dist 1T'] + merged['Work Rate Total Dist 2T']
+        merged = merged.sort_values(by='Total', ascending=False)
+
+        # Gráfico de barras apiladas con colores
+        fig_bar = go.Figure()
+        fig_bar.add_trace(go.Bar(
+            x=merged['Player Name'],
+            y=merged['Work Rate Total Dist 1T'],
+            name='1er Tiempo',
+            marker_color='lightskyblue',
+            text=merged['Work Rate Total Dist 1T'],
+            textposition='inside'
+        ))
+        fig_bar.add_trace(go.Bar(
+            x=merged['Player Name'],
+            y=merged['Work Rate Total Dist 2T'],
+            name='2do Tiempo',
+            marker_color='tomato',
+            text=merged['Work Rate Total Dist 2T'],
+            textposition='inside'
+        ))
+        fig_bar.update_layout(
+            barmode='stack',
+            title='Distancia Total por Jugador (1T vs 2T)',
+            xaxis_title='Jugador',
+            yaxis_title='Distancia (m)',
+            legend_title='Periodo',
+            uniformtext_minsize=8,
+            uniformtext_mode='hide'
+        )
         st.plotly_chart(fig_bar)
 
 else:
     st.info("Por favor, sube un archivo CSV para comenzar.")
-
