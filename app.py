@@ -47,15 +47,14 @@ if uploaded_files:
         df['Fecha CSV'] = fecha
         df['Archivo'] = file.name
 
-        # Asegurar nombre limpio del partido (sin tiempos u otros)
-        partido_base = re.sub(r'\s*[-_]*\s*(1ER|2DO)?\s*TIEMPO', '', df['Period Name'].iloc[0], flags=re.IGNORECASE)
+        # Limpiar nombre del partido
+        partido_base = re.sub(r'\\s*[-_]*\\s*(1ER|2DO)?\\s*TIEMPO', '', df['Period Name'].iloc[0], flags=re.IGNORECASE)
         df['Partido + Fecha'] = f"{partido_base.strip()} | {fecha}"
 
         all_dfs.append(df)
 
     full_df = pd.concat(all_dfs, ignore_index=True)
 
-    # Diccionario de métricas
     selected_metrics = {
         'Distancia Total (m)': 'Work Rate Total Dist',
         'Distancia Tempo (m)': 'Tempo Distance (Gen2)',
@@ -67,7 +66,7 @@ if uploaded_files:
         'Deceleraciones (#)': 'Dec Eff Count (Gen2)'
     }
 
-    partidos_unicos = sorted(set([p for p in full_df['Partido + Fecha'].unique() if not re.search(r'(1ER|2DO)\s*TIEMPO', p, re.IGNORECASE)]))
+    partidos_unicos = sorted(set([p for p in full_df['Partido + Fecha'].unique() if not re.search(r'(1ER|2DO)\\s*TIEMPO', p, re.IGNORECASE)]))
     partidos = ['Todos'] + partidos_unicos if len(partidos_unicos) > 1 else partidos_unicos
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
 
@@ -101,29 +100,34 @@ if uploaded_files:
         team_total['Player Name'] = 'Total Equipo'
         grouped = pd.concat([grouped, pd.DataFrame([team_total])], ignore_index=True)
 
-        # Calcular promedios para visual boxes
-        td_avg = grouped['Distancia Total (m)'][:-1].mean()
-        tempo_avg = grouped['Distancia Tempo (m)'][:-1].mean()
-        hsr_avg = grouped['Distancia HSR (m)'][:-1].mean()
-        sprint_avg = grouped['Distancia Sprint (m)'][:-1].mean()
-        acc_avg = grouped['Aceleraciones (#)'][:-1].mean()
-        dec_avg = grouped['Deceleraciones (#)'][:-1].mean()
+        # Calcular promedios con validación segura
+        def safe_mean(df, col):
+            return f"{df[col][:-1].mean():.0f}" if col in df.columns else "N/A"
+
+        td_avg = safe_mean(grouped, 'Distancia Total (m)')
+        tempo_avg = safe_mean(grouped, 'Distancia Tempo (m)')
+        hsr_avg = safe_mean(grouped, 'Distancia HSR (m)')
+        sprint_avg = safe_mean(grouped, 'Distancia Sprint (m)')
+        acc_avg = safe_mean(grouped, 'Aceleraciones (#)')
+        dec_avg = safe_mean(grouped, 'Deceleraciones (#)')
 
         col1, col2, col3, col4, col5, col6 = st.columns(6)
-        col1.markdown(f"<div class='metric-box'><div class='metric-title'>TD Average</div><div class='metric-value'>{td_avg:.0f}</div></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='metric-box'><div class='metric-title'>Tempo Average</div><div class='metric-value'>{tempo_avg:.0f}</div></div>", unsafe_allow_html=True)
-        col3.markdown(f"<div class='metric-box'><div class='metric-title'>HSR Average</div><div class='metric-value'>{hsr_avg:.0f}</div></div>", unsafe_allow_html=True)
-        col4.markdown(f"<div class='metric-box'><div class='metric-title'>Sprint Average</div><div class='metric-value'>{sprint_avg:.0f}</div></div>", unsafe_allow_html=True)
-        col5.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Average</div><div class='metric-value'>{acc_avg:.0f}</div></div>", unsafe_allow_html=True)
-        col6.markdown(f"<div class='metric-box'><div class='metric-title'>DEC Average</div><div class='metric-value'>{dec_avg:.0f}</div></div>", unsafe_allow_html=True)
+        col1.markdown(f"<div class='metric-box'><div class='metric-title'>TD Average</div><div class='metric-value'>{td_avg}</div></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='metric-box'><div class='metric-title'>Tempo Average</div><div class='metric-value'>{tempo_avg}</div></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='metric-box'><div class='metric-title'>HSR Average</div><div class='metric-value'>{hsr_avg}</div></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='metric-box'><div class='metric-title'>Sprint Average</div><div class='metric-value'>{sprint_avg}</div></div>", unsafe_allow_html=True)
+        col5.markdown(f"<div class='metric-box'><div class='metric-title'>ACC Average</div><div class='metric-value'>{acc_avg}</div></div>", unsafe_allow_html=True)
+        col6.markdown(f"<div class='metric-box'><div class='metric-title'>DEC Average</div><div class='metric-value'>{dec_avg}</div></div>", unsafe_allow_html=True)
 
         st.divider()
 
         st.subheader("Visualización de Jugadores")
         fig = go.Figure()
 
-        for metric, color in zip(['Distancia Total (m)', 'Distancia Tempo (m)', 'Distancia HSR (m)', 'Distancia Sprint (m)'],
-                                  ['dodgerblue', 'coral', 'hotpink', 'goldenrod']):
+        for metric, color in zip(
+            ['Distancia Total (m)', 'Distancia Tempo (m)', 'Distancia HSR (m)', 'Distancia Sprint (m)'],
+            ['dodgerblue', 'coral', 'hotpink', 'goldenrod']
+        ):
             if metric in grouped.columns:
                 fig.add_trace(go.Bar(
                     y=grouped['Player Name'],
