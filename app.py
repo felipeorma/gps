@@ -27,7 +27,10 @@ labels = {
         "sprint_count": "Number of Sprints",
         "max_speed": "Max Speed (m/s)",
         "acc": "Accelerations (#)",
-        "dec": "Decelerations (#)"
+        "dec": "Decelerations (#)",
+        "load": "Player Load",
+        "impacts": "Impacts Count",
+        "work_rate": "Work Rate (m/min)"
     },
     "Español": {
         "title": "Informe GPS del Partido",
@@ -46,7 +49,10 @@ labels = {
         "sprint_count": "N° de Sprints",
         "max_speed": "Velocidad Máxima (m/s)",
         "acc": "Aceleraciones (#)",
-        "dec": "Deceleraciones (#)"
+        "dec": "Deceleraciones (#)",
+        "load": "Carga del Jugador",
+        "impacts": "Recuento de Impactos",
+        "work_rate": "Índice de Trabajo (m/min)"
     }
 }[lang]
 
@@ -103,7 +109,10 @@ if uploaded_files:
         labels["sprint_count"]: 'Sprint Eff Count (Gen2)',
         labels["max_speed"]: 'Max Velocity [ Per Max ]',
         labels["acc"]: 'Acc Eff Count (Gen2)',
-        labels["dec"]: 'Dec Eff Count (Gen2)'
+        labels["dec"]: 'Dec Eff Count (Gen2)',
+        labels["load"]: 'Player Load (Gen2)',
+        labels["impacts"]: 'Impacts Count',
+        labels["work_rate"]: 'Work Rate [ Per Min ]'
     }
 
     partidos = sorted(set([p for p in full_df['Partido + Fecha'].unique() if not re.search(r'(1ER|2DO)', p, re.IGNORECASE)]))
@@ -136,7 +145,7 @@ if uploaded_files:
         for i, (k, v) in enumerate(metric_labels):
             if v in df_grouped.columns:
                 avg = df_grouped[v].mean()
-                col = metric_cols[i % 4]  # 4 columnas por fila
+                col = metric_cols[i % 4]
                 col.markdown(f"""
                     <div class='metric-box'>
                         <div class='metric-title'>{k}</div>
