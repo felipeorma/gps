@@ -161,14 +161,17 @@ if uploaded_files:
     if jugador != labels["all"]:
         df = df[df['Player Name'] == jugador]
 
-    st.title(labels["title"])
+    if jugador != labels["all"]:
+        st.title(f"{labels['title']} - {jugador}")
+    else:
+        st.title(labels["title"])
 
     if not df.empty:
         columns_exist = [v for v in metrics.values() if v in df.columns]
         df[columns_exist] = df[columns_exist].apply(pd.to_numeric, errors='coerce')
         df_grouped = df.groupby('Player Name')[columns_exist].mean().reset_index()
 
-        st.subheader(labels["averages"])
+        st.subheader(f"{labels['averages']}: {jugador}" if jugador != labels["all"] else labels['averages'])
 
         grouped_metrics = {
             "Carga": [
