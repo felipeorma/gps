@@ -64,19 +64,13 @@ if uploaded_files:
         'Deceleraciones Bajas (#)': 'Dec1 Eff (Gen2)'
     }
 
-    # Lista de partidos únicos
     partidos = ['Todos'] + sorted(full_df['Period Name'].dropna().unique().tolist())
     partido_seleccionado = st.sidebar.selectbox("Match", partidos)
-
-    # Lista de tiempos únicos
     tiempos = ['Todos'] + sorted(full_df['Period Number'].dropna().unique().tolist())
     tiempo_seleccionado = st.sidebar.selectbox("Tiempo", tiempos)
-
-    # Lista de jugadores únicos
     jugadores = ['Todos'] + sorted(full_df['Player Name'].dropna().unique().tolist())
     jugador_seleccionado = st.sidebar.selectbox("Jugador", jugadores)
 
-    # Filtrar según selección
     df = full_df.copy()
     if partido_seleccionado != 'Todos':
         df = df[df['Period Name'] == partido_seleccionado]
@@ -87,7 +81,6 @@ if uploaded_files:
 
     st.title("Match GPS Report")
 
-    # Mostrar métricas generales
     avg_data = df.groupby('Player Name').agg({
         'Work Rate Total Dist': 'mean',
         'Acceleration Load': 'mean',
@@ -115,11 +108,26 @@ if uploaded_files:
 
     st.divider()
 
-    # Tabla principal con todos los jugadores
     if jugador_seleccionado == 'Todos':
         tabla = df.groupby('Player Name')[list(selected_metrics.values())].mean().reset_index()
         tabla = tabla.rename(columns={v: k for k, v in selected_metrics.items()})
-        st.dataframe(tabla)
+
+        st.subheader("Resumen por Jugador")
+        st.dataframe(tabla, use_container_width=True)
+
+        st.subheader("Gráfico de barras - Distancia Total por Jugador")
+        grafico = tabla.sort_values('Distancia Total (m)', ascending=False)
+        fig = px.bar(
+            grafico,
+            x='Player Name',
+            y='Distancia Total (m)',
+            text=grafico['Distancia Total (m)'].round(2),
+            labels={'Distancia Total (m)': 'Distancia Total (m)'},
+            height=500
+        )
+        fig.update_traces(textposition='outside')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.info("Por favor, sube uno o más archivos CSV para comenzar.")
