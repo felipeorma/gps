@@ -325,7 +325,10 @@ if uploaded_files:
                     if k in metrics and metrics[k] in df.columns:
                         chart_df = df.groupby('Player Name')[metrics[k]].sum().reset_index().sort_values(metrics[k], ascending=True)
                         fig = neon_bar_chart(chart_df, k, metrics[k])
-                        image_path = f"bar_chart_{group.replace(' ', '_')}_{k.replace(' ', '_')}.png"
+                        import re
+                        safe_group = re.sub(r'[^\w\-]', '_', group)
+                        safe_k = re.sub(r'[^\w\-]', '_', k)
+                        image_path = f"bar_chart_{safe_group}_{safe_k}.png"
                         try:
                             fig.write_image(image_path)
                             group_charts.append({"path": image_path, "title": f"{group} - {k}"})
