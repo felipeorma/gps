@@ -195,13 +195,19 @@ def generate_pdf(title, summary, avg_data, radar_data=None, bar_charts=None):
             pdf.cell(200, 10, txt=f"Radar chart error: {e}", ln=True)
 
     if bar_charts:
+        current_category = ""
         for chart in bar_charts:
             try:
                 path = chart.get("path")
                 title = chart.get("title")
-                if path and os.path.exists(path):
+                category = title.split(" - ")[0] if " - " in title else ""
+                if category != current_category:
                     pdf.add_page()
-                    pdf.set_font("Arial", 'B', 14)
+                    pdf.set_font("Arial", 'B', 16)
+                    pdf.cell(200, 10, txt=category, ln=True, align='C')
+                    current_category = category
+                if path and os.path.exists(path):
+                    pdf.set_font("Arial", 'B', 12)
                     pdf.cell(200, 10, txt=title, ln=True, align='C')
                     pdf.image(path, x=30, w=150)
                     os.remove(path)
