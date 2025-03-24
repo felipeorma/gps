@@ -7,8 +7,8 @@ import base64
 import io
 import os
 from fpdf import FPDF
-
 import plotly.io as pio
+
 pio.kaleido.scope.default_format = "png"
 pio.kaleido.scope.default_width = 700
 pio.kaleido.scope.default_height = 500
@@ -121,6 +121,50 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Función PDF actualizada (centrado, fondo, redimensionado, sin radar)
+def generate_pdf(title, summary, avg_data, bar_charts=None):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_fill_color(13, 13, 13)  # fondo oscuro
+    pdf.rect(0, 0, 210, 297, 'F')
+    pdf.set_font("Arial", 'B', 16)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(0, 10, title, ln=True, align='C')
+    pdf.ln(10)
+
+    pdf.set_font("Arial", size=12)
+    for k, v in summary.items():
+        k_translated = labels.get(k, k)
+        pdf.cell(0, 10, f"{k_translated}: {v}", ln=True, align='C')
+
+    for cat, items in avg_data.items():
+        pdf.ln(10)
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 10, f"{labels['avg_of']} {cat}", ln=True, align='C')
+        pdf.set_font("Arial", size=11)
+        for label, val in items:
+            pdf.cell(0, 8, f"{label}: {val:.1f}", ln=True, align='C')
+
+    if bar_charts:
+        for chart in bar_charts:
+            try:
+                path = chart.get("path")
+                title = chart.get("title")
+                if path and os.path.exists(path):
+                    pdf.add_page()
+                    pdf.set_fill_color(13, 13, 13)
+                    pdf.rect(0, 0, 210, 297, 'F')
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font("Arial", 'B', 14)
+                    pdf.cell(0, 10, title, ln=True, align='C')
+                    pdf.image(path, x=25, w=160)
+                    os.remove(path)
+            except Exception as e:
+                pdf.cell(0, 10, f"Chart error: {e}", ln=True)
+
+    return pdf.output(dest='S').encode('latin-1')
+
 # Función para gráficos estilo rojo neón
 
 def neon_bar_chart(df, label, column):
@@ -161,62 +205,6 @@ def create_radar_chart(data_dict, title):
         font=dict(color="white")
     )
     return fig
-
-# Función PDF con radar
-
-def generate_pdf(title, summary, avg_data, radar_data=None, bar_charts=None):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=title, ln=True, align='C')
-    pdf.ln(10)
-    for k, v in summary.items():
-        k_translated = labels.get(k, k)
-        pdf.cell(200, 10, txt=f"{k_translated}: {v}", ln=True)
-    pdf.ln(5)
-    for cat, items in avg_data.items():
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(200, 10, txt=f"{labels['avg_of']} {cat}", ln=True)
-        pdf.set_font("Arial", size=11)
-        for label, val in items:
-            pdf.cell(200, 8, txt=f"{label}: {val:.1f}", ln=True)
-        pdf.ln(3)
-
-    if radar_data:
-        try:
-            fig = create_radar_chart(radar_data, "Radar")
-            radar_path = "radar_temp.png"
-            fig.write_image(radar_path)
-            pdf.add_page()
-            pdf.image(radar_path, x=30, w=150)
-            os.remove(radar_path)
-        except Exception as e:
-            pdf.ln(10)
-            pdf.cell(200, 10, txt=f"Radar chart error: {e}", ln=True)
-
-    if bar_charts:
-        current_category = ""
-        for chart in bar_charts:
-            try:
-                path = chart.get("path")
-                title = chart.get("title")
-                category = title.split(" - ")[0] if " - " in title else ""
-                if category != current_category:
-                    pdf.add_page()
-                    pdf.set_font("Arial", 'B', 16)
-                    pdf.cell(200, 10, txt=category, ln=True, align='C')
-                    current_category = category
-                if path and os.path.exists(path):
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(200, 10, txt=title, ln=True, align='C')
-                    pdf.image(path, x=30, w=150)
-                    os.remove(path)
-            except Exception as e:
-                pdf.cell(200, 10, txt=f"Bar chart error: {e}", ln=True)
-
-    return pdf.output(dest='S').encode('latin-1')
-
-
 
 
 
