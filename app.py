@@ -312,7 +312,28 @@ if uploaded_files:
                 if items:
                     resumen_avg[group] = items
 
-            pdf_bytes = generate_pdf(labels["pdf_title"], resumen, resumen_avg)
+            radar_data_dict = {
+                label: df_grouped[metrics[label]].mean()
+                for group, keys in grouped_metrics.items()
+                for label in keys if label in metrics and metrics[label] in df_grouped.columns
+            }
+
+            bar_chart_images = []
+            for group, keys in grouped_metrics.items():
+                group_charts = []
+                for k in keys:
+                    if k in metrics and metrics[k] in df.columns:
+                        chart_df = df.groupby('Player Name')[metrics[k]].sum().reset_index().sort_values(metrics[k], ascending=True)
+                        fig = neon_bar_chart(chart_df, k, metrics[k])
+                        image_path = f"bar_chart_{group.replace(' ', '_')}_{k.replace(' ', '_')}.png"
+                        try:
+                            fig.write_image(image_path)
+                            group_charts.append({"path": image_path, "title": f"{group} - {k}"})
+                        except Exception as e:
+                            st.warning(f"No se pudo guardar la imagen para {k}: {e}")
+                bar_chart_images.extend(group_charts)
+
+            pdf_bytes = generate_pdf(labels["pdf_title"], resumen, resumen_avg, radar_data=radar_data_dict, bar_charts=bar_chart_images)
             b64 = base64.b64encode(pdf_bytes).decode()
             href = f'<a href="data:application/octet-stream;base64,{b64}" download="{labels["pdf_file"]}">{labels["download_pdf"]}</a>'
             st.markdown(href, unsafe_allow_html=True)
@@ -342,3 +363,4 @@ if uploaded_files:
                 st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Cargue uno o más archivos CSV para comenzar / Upload one or more CSV files to begin.")
+
