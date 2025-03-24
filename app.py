@@ -126,10 +126,10 @@ def generate_pdf(title, summary, avg_data, bar_charts=None):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_fill_color(13, 13, 13)  # fondo oscuro
+    pdf.set_fill_color(13, 13, 13)
     pdf.rect(0, 0, 210, 297, 'F')
-    pdf.set_font("Arial", 'B', 16)
     pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Arial", 'B', 16)
     pdf.cell(0, 10, title, ln=True, align='C')
     pdf.ln(10)
 
@@ -139,7 +139,7 @@ def generate_pdf(title, summary, avg_data, bar_charts=None):
         pdf.cell(0, 10, f"{k_translated}: {v}", ln=True, align='C')
 
     for cat, items in avg_data.items():
-        pdf.ln(10)
+        pdf.ln(8)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 10, f"{labels['avg_of']} {cat}", ln=True, align='C')
         pdf.set_font("Arial", size=11)
@@ -147,21 +147,29 @@ def generate_pdf(title, summary, avg_data, bar_charts=None):
             pdf.cell(0, 8, f"{label}: {val:.1f}", ln=True, align='C')
 
     if bar_charts:
+        grouped = {}
         for chart in bar_charts:
-            try:
-                path = chart.get("path")
-                title = chart.get("title")
-                if path and os.path.exists(path):
-                    pdf.add_page()
-                    pdf.set_fill_color(13, 13, 13)
-                    pdf.rect(0, 0, 210, 297, 'F')
-                    pdf.set_text_color(255, 255, 255)
-                    pdf.set_font("Arial", 'B', 14)
-                    pdf.cell(0, 10, title, ln=True, align='C')
-                    pdf.image(path, x=25, w=160)
-                    os.remove(path)
-            except Exception as e:
-                pdf.cell(0, 10, f"Chart error: {e}", ln=True)
+            group = chart.get("group")
+            grouped.setdefault(group, []).append(chart)
+
+        for group, charts in grouped.items():
+            pdf.add_page()
+            pdf.set_fill_color(13, 13, 13)
+            pdf.rect(0, 0, 210, 297, 'F')
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font("Arial", 'B', 14)
+            pdf.cell(0, 10, f"{labels['avg_of']} {group}", ln=True, align='C')
+            pdf.ln(5)
+
+            for i, chart in enumerate(charts):
+                try:
+                    path = chart.get("path")
+                    if path and os.path.exists(path):
+                        y_position = 50 + (i % 3) * 75
+                        pdf.image(path, x=25, y=y_position, w=160, h=60)
+                        os.remove(path)
+                except Exception as e:
+                    pdf.cell(0, 10, f"Chart error: {e}", ln=True)
 
     return pdf.output(dest='S').encode('latin-1')
 
