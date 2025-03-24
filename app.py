@@ -324,7 +324,7 @@ if uploaded_files:
                             st.warning(f"No se pudo guardar la imagen para {k}: {e}")
                 bar_chart_images.extend(group_charts)
 
-            pdf_bytes = generate_pdf(labels["pdf_title"], resumen, resumen_avg, radar_data=radar_data_dict, bar_charts=bar_chart_images)
+            pdf_bytes = generate_pdf(labels["pdf_title"], resumen, resumen_avg, bar_charts=bar_chart_images)
             b64 = base64.b64encode(pdf_bytes).decode()
             href = f'<a href="data:application/octet-stream;base64,{b64}" download="{labels["pdf_file"]}">{labels["download_pdf"]}</a>'
             st.markdown(href, unsafe_allow_html=True)
