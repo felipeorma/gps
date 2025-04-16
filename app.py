@@ -205,7 +205,7 @@ def generate_pdf(title, summary, avg_data, bar_charts=None):
     for label, definition in metric_definitions.items():
         pdf.multi_cell(0, 6, f"{label}: {definition}")
 
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='S').encode('latin-1', errors='replace')
 
 # Filtros y carga de archivos
 st.sidebar.header("Filtros")
