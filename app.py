@@ -89,6 +89,8 @@ labels = {
     }
 }[lang]
 
+
+
 # Definiciones de métricas
 metric_definitions = {
     labels["distance"]: "Total distance covered during the match.",
@@ -256,6 +258,14 @@ if uploaded_files:
         labels["acc"]: 'Acc Eff Count (Gen2)',
         labels["dec"]: 'Dec Eff Count (Gen2)',
         labels["load"]: 'Player Load',
+        "Peak Player Load": 'Peak Player Load',
+        "Player Load Work Time": 'Player Load Work Time',
+        "Player Load Rest Time": 'Player Load Rest Time',
+        "Player Load Work:Rest": 'Player Load Work:Rest',
+        "Velocity Exertion": 'Velocity Exertion',
+        "Velocity Exertion Per Min": 'Velocity Exertion Per Min',
+        "Acceleration Load": 'Acceleration Load',
+        "Acceleration Density Index": 'Acceleration Density Index',
         labels["rhie"]: 'RHIE Total Bouts'
     }
 
@@ -286,9 +296,9 @@ if uploaded_files:
         st.subheader(f"{labels['averages']}: {jugador}" if jugador != labels["all"] else labels['averages'])
 
         grouped_metrics = {
-            labels["Carga"]: [labels["load"]],
-            labels["Velocidad e Intensidad"]: [labels["max_speed"]],
-            labels["Aceleración y Desaceleración"]: [labels["acc"], labels["dec"]],
+            labels["Carga"]: [labels["load"], "Peak Player Load", "Player Load Work Time", "Player Load Rest Time", "Player Load Work:Rest"],
+            labels["Velocidad e Intensidad"]: [labels["max_speed"], "Velocity Exertion", "Velocity Exertion Per Min"],
+            labels["Aceleración y Desaceleración"]: [labels["acc"], labels["dec"], "Acceleration Load", "Acceleration Density Index"],
             labels["Distancias"]: [labels["distance"], labels["tempo"], labels["hsr"], labels["sprint"], labels["sprint_count"]],
             labels["Esfuerzos Repetidos"]: [labels["rhie"]]
         }
