@@ -100,7 +100,15 @@ metric_definitions = {
     labels["acc"]: "Number of effective accelerations (>1.5 m/s²).",
     labels["dec"]: "Number of effective decelerations (<-1.5 m/s²).",
     labels["load"]: "Cumulative load based on all movement intensities.",
-    labels["rhie"]: "Repeated high-intensity efforts (sprint, acc, dec)."
+    labels["rhie"]: "Repeated high-intensity efforts (sprint, acc, dec).",
+    "Peak Player Load": "Maximum load recorded in a short period.",
+    "Player Load Work Time": "Total time under physical effort contributing to load.",
+    "Player Load Rest Time": "Total time of recovery or inactivity during the session.",
+    "Player Load Work:Rest": "Ratio between work time and rest time.",
+    "Velocity Exertion": "Effort exerted considering intensity and velocity changes.",
+    "Velocity Exertion Per Min": "Velocity-based exertion per minute of activity.",
+    "Acceleration Load": "Load accumulated from acceleration efforts.",
+    "Acceleration Density Index": "Frequency and density of acceleration actions."
 }
 
 # Estilo neón
