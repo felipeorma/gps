@@ -160,6 +160,11 @@ def neon_bar_chart(df, label, column):
     )
     return fig
 
+def clean_text(text):
+    """Convierte el texto a latin-1 seguro, reemplazando caracteres Unicode no válidos."""
+    return str(text).encode('latin-1', errors='replace').decode('latin-1')
+
+
 # Función para crear PDF
 def generate_pdf(title, summary, avg_data, bar_charts=None):
     pdf = FPDF()
@@ -169,21 +174,21 @@ def generate_pdf(title, summary, avg_data, bar_charts=None):
     pdf.rect(0, 0, 210, 297, 'F')
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, title, ln=True, align='C')
+    pdf.cell(0, 10, clean_text(title), ln=True, align='C')
     pdf.ln(10)
 
     pdf.set_font("Arial", size=12)
     for k, v in summary.items():
         k_translated = labels.get(k, k)
-        pdf.cell(0, 10, f"{k_translated}: {v}", ln=True, align='C')
+        pdf.cell(0, 10, clean_text(f"{k_translated}: {v}"), ln=True, align='C')
 
     for cat, items in avg_data.items():
         pdf.ln(10)
         pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 10, f"{labels['avg_of']} {cat}", ln=True, align='C')
+        pdf.cell(0, 10, clean_text(f"{labels['avg_of']} {cat}"), ln=True, align='C')
         pdf.set_font("Arial", size=11)
         for label, val in items:
-            pdf.cell(0, 8, f"{label}: {val:.1f}", ln=True, align='C')
+            pdf.cell(0, 8, clean_text(f"{label}: {val:.1f}"), ln=True, align='C')
 
     if bar_charts:
         for chart in bar_charts:
@@ -196,24 +201,26 @@ def generate_pdf(title, summary, avg_data, bar_charts=None):
                     pdf.rect(0, 0, 210, 297, 'F')
                     pdf.set_text_color(255, 255, 255)
                     pdf.set_font("Arial", 'B', 14)
-                    pdf.cell(0, 10, title, ln=True, align='C')
+                    pdf.cell(0, 10, clean_text(title), ln=True, align='C')
                     pdf.image(path, x=25, w=160)
                     os.remove(path)
             except Exception as e:
-                pdf.cell(0, 10, f"Chart error: {e}", ln=True)
+                pdf.cell(0, 10, clean_text(f"Chart error: {e}"), ln=True)
 
-    # Añadir definiciones al final
+    # Página final con definiciones
     pdf.add_page()
     pdf.set_fill_color(13, 13, 13)
     pdf.rect(0, 0, 210, 297, 'F')
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "Metric Definitions", ln=True, align='C')
+    pdf.cell(0, 10, clean_text("Metric Definitions"), ln=True, align='C')
     pdf.set_font("Arial", size=10)
-    for label, definition in metric_definitions.items():
-        pdf.multi_cell(0, 6, f"{label}: {definition}")
 
-    return pdf.output(dest='S').encode('utf-8', errors='ignore')
+    for label, definition in metric_definitions.items():
+        pdf.multi_cell(0, 6, clean_text(f"{label}: {definition}"))
+
+    return pdf.output(dest='S').encode('latin-1')
+
 
 
 # Filtros y carga de archivos
