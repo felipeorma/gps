@@ -339,7 +339,7 @@ if uploaded_files:
                         metric_cols[j].markdown(f"""
                             <div class='metric-box'>
                                 <div class='metric-title'>{k}</div>
-                                <div class='metric-value'>{avg:.0f}</div>
+                                <div class='metric-value'>{avg:.1f}</div>
                                 <div style='font-size:10px; color:#bbb;'>{definition}</div>
                             </div>
                         """, unsafe_allow_html=True)
