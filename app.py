@@ -18,7 +18,76 @@ st.set_page_config(layout="wide")
 lang = st.sidebar.selectbox("Language / Idioma", ["English", "Español"])
 
 # Traducción de etiquetas
-labels = { ... }  # [copia el bloque de traducciones que ya tenías aquí]
+labels = {
+    "English": {
+        "title": "Match GPS Report",
+        "upload": "Upload match CSV files",
+        "match": "Match",
+        "half": "Half",
+        "player": "Player",
+        "first_half": "First Half",
+        "second_half": "Second Half",
+        "all": "All",
+        "averages": "Player(s) Averages",
+        "distance": "Total Distance (m)",
+        "tempo": "Tempo Distance (m)",
+        "hsr": "HSR Distance (m)",
+        "sprint": "Sprint Distance (m)",
+        "sprint_count": "Number of Sprints",
+        "max_speed": "Max Speed (m/s)",
+        "acc": "Accelerations (#)",
+        "dec": "Decelerations (#)",
+        "load": "Player Load",
+        "rhie": "RHIE Count",
+        "create_pdf": "📄 Generate PDF Report",
+        "download_pdf": "📅 Download PDF Report",
+        "avg_of": "Average of",
+        "Carga": "Load",
+        "Velocidad e Intensidad": "Speed & Intensity",
+        "Aceleración y Desaceleración": "Acceleration & Deceleration",
+        "Distancias": "Distances",
+        "Esfuerzos Repetidos": "Repeated High-Intensity Efforts",
+        "pdf_title": "Team GPS Report",
+        "pdf_file": "gps_report.pdf",
+        "Fecha": "Date",
+        "Partido": "Match",
+        "Jugador": "Player"
+    },
+    "Español": {
+        "title": "Informe GPS del Partido",
+        "upload": "Sube archivos CSV del partido",
+        "match": "Partido",
+        "half": "Tiempo",
+        "player": "Jugador",
+        "first_half": "Primer Tiempo",
+        "second_half": "Segundo Tiempo",
+        "all": "Todos",
+        "averages": "Promedios del(los) Jugador(es)",
+        "distance": "Distancia Total (m)",
+        "tempo": "Distancia en Tempo (m)",
+        "hsr": "Distancia HSR (m)",
+        "sprint": "Distancia en Sprint (m)",
+        "sprint_count": "N° de Sprints",
+        "max_speed": "Velocidad Máxima (m/s)",
+        "acc": "Aceleraciones (#)",
+        "dec": "Desaceleraciones (#)",
+        "load": "Carga del Jugador",
+        "rhie": "Esfuerzos Repetidos Alta Intensidad",
+        "create_pdf": "📄 Crear Informe PDF",
+        "download_pdf": "📅 Descargar Informe PDF",
+        "avg_of": "Promedio de",
+        "Carga": "Carga",
+        "Velocidad e Intensidad": "Velocidad e Intensidad",
+        "Aceleración y Desaceleración": "Aceleración y Desaceleración",
+        "Distancias": "Distancias",
+        "Esfuerzos Repetidos": "Esfuerzos Repetidos",
+        "pdf_title": "Informe GPS del Equipo",
+        "pdf_file": "informe_gps.pdf",
+        "Fecha": "Fecha",
+        "Partido": "Partido",
+        "Jugador": "Jugador"
+    }
+}[lang]
 
 # Definiciones de métricas
 metric_definitions = {
